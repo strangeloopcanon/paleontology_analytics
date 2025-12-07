@@ -1,0 +1,16 @@
+=== ML Extinction Prediction Summary ===
+
+Dataset: data/processed/merged_occurrences.parquet
+Total genus-bin samples: 16316
+Extinction rate (per bin): 53.11%
+
+Model: Random Forest (n_estimators=100, balanced)
+Accuracy: 69.97%
+ROC-AUC: 0.747
+
+Feature Importances (descending):
+  lat_range: 0.4750
+  abundance: 0.1638
+  geographic_range: 0.1409
+  age: 0.1215
+  env_breadth: 0.0989

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# IDEs
+.DS_Store
+.vscode/
+.idea/
+
+# Data (Ignore raw and processed data, they are too big and can be regenerated)
+data/raw/
+data/processed/
+
+# Keep dashboard JSONs! (Do NOT ignore these)
+!dashboard/*.json
+
+# Logs
+*.log

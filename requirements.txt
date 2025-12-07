@@ -1,0 +1,11 @@
+requests
+pandas
+pyarrow
+fastparquet
+matplotlib
+jupyter
+tqdm
+networkx
+scikit-learn
+streamlit
+

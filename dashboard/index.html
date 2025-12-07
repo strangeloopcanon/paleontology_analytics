@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paleontology Analytics: The Report</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: #fff;
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: #2c3e50;
+            font-weight: 300;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: center;
+            background: #fff;
+            padding: 0;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav button {
+            background: transparent;
+            border: none;
+            padding: 20px 30px;
+            font-size: 1.1em;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav button:hover {
+            color: #2c3e50;
+        }
+
+        .nav button.active {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+        }
+
+        /* Content */
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards & Text */
+        .explanation {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+
+        .explanation h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.8em;
+        }
+
+        .explanation p {
+            color: #555;
+            font-size: 1.1em;
+            margin-bottom: 0;
+        }
+
+        .chart-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 40px;
+        }
+
+        .chart {
+            height: 600px;
+            width: 100%;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        .stat-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* Future Ideas List */
+        .future-list {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 60px;
+            border: 1px dashed #bbb;
+        }
+
+        .future-list h3 {
+            margin-top: 0;
+            color: #7f8c8d;
+        }
+
+        .future-list ul {
+            padding-left: 20px;
+            color: #666;
+        }
+
+        .future-list li {
+            margin-bottom: 10px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+            margin-top: 60px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Paleontology Analytics</h1>
+        <p class="subtitle">Uncovering the hidden patterns of life's history</p>
+    </header>
+
+    <nav class="nav">
+        <button class="active" onclick="showSection('pangea')">🌍 Pulse of Pangea</button>
+        <button onclick="showSection('ml')">🤖 AI Extinction Predictor</button>
+        <button onclick="showSection('climate')">🌡️ Climate Drivers</button>
+        <button onclick="showSection('taxonomy')">🦕 Life's Family Tree</button>
+        <button onclick="showSection('explorer')">🔍 Data Explorer</button>
+    </nav>
+
+    <div class="container">
+
+        <!-- TAB 1: PULSE OF PANGEA -->
+        <div id="pangea" class="section active">
+            <div class="explanation">
+                <h2>How connected was the ancient world?</h2>
+                <p>
+                    We used <strong>Network Theory</strong> to measure "biogeographic modularity"—a score of how
+                    fragmented the world's ecosystems were.
+                    <br><br>
+                    <strong>Why it matters:</strong> High modularity means continents were isolated (like today),
+                    allowing distinct ecosystems to evolve. Low modularity means supercontinents like Pangea formed,
+                    allowing species to mix freely but often reducing global diversity.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <div id="modularityChart" class="chart"></div>
+            </div>
+
+            <div class="explanation" style="border-left-color: #9b59b6;">
+                <h2>Is this pattern real?</h2>
+                <p>
+                    To prove this isn't just noise, we ran a <strong>Null Model Test</strong>. We generated 100
+                    randomized worlds and compared them to our data. The result? Our observed modularity is
+                    statistically significant (p < 0.05), meaning these biogeographic barriers were real physical
+                        constraints, not random chance. </p>
+                        <div id="nullModelStats" class="stat-row"></div>
+            </div>
+
+            <div class="chart-container">
+                <div id="nullHistogram" class="chart" style="height: 350px;"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: AI EXTINCTION PREDICTOR -->
+        <div id="ml" class="section">
+            <div class="explanation" style="border-left-color: #e74c3c;">
+                <h2>Can AI predict who survives?</h2>
+                <p>
+                    We trained a <strong>Random Forest Classifier</strong> on thousands of fossil genera to find the
+                    hidden "rules" of extinction. Instead of just guessing, the AI looked at geographic range,
+                    abundance, and age to predict if a genus would survive to the next time bin.
+                    <br><br>
+                    <strong>The Discovery:</strong> The most important predictor wasn't abundance or age—it was
+                    <strong>Latitudinal Range</strong>. Species that could survive in many different temperatures (high
+                    latitudinal range) were much harder to kill.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <div id="mlChart" class="chart"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CLIMATE DRIVERS -->
+        <div id="climate" class="section">
+            <div class="explanation" style="border-left-color: #f39c12;">
+                <h2>Does temperature control biodiversity?</h2>
+                <p>
+                    The "Holy Grail" of paleobiology is linking biological change to physical earth systems. Here, we
+                    correlate our global diversity curve against the full Phanerozoic temperature curve (540 Ma to
+                    Present).
+                    <br><br>
+                    <strong>The Result:</strong> We found a correlation of <strong>r = 0.24</strong>.
+                    <br><br>
+                    This moderate correlation suggests that while climate is a factor, it is not the <em>sole</em>
+                    driver. Life's history is complex, influenced by mass extinctions, continental drift, and
+                    evolutionary innovation, not just the thermometer.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <div id="climateChart" class="chart"></div>
+                <div id="climateStats" class="stat-row"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: TAXONOMY & DINOSAURS -->
+        <div id="taxonomy" class="section">
+            <div class="explanation" style="border-left-color: #2ecc71;">
+                <h2>The Shape of Life</h2>
+                <p>
+                    Explore the hierarchical structure of life in our database. The inner circles represent Phyla,
+                    branching out into Classes and Orders.
+                </p>
+            </div>
+            <div class="chart-container">
+                <div id="sunburstChart" class="chart" style="height: 700px;"></div>
+            </div>
+
+            <div class="explanation" style="border-left-color: #f1c40f;">
+                <h2>🏆 Survivor Champions</h2>
+                <p>
+                    Which genera stood the test of time? These are the longest-living organisms in our database record.
+                </p>
+                <div id="survivorTable"></div>
+            </div>
+
+            <div class="explanation" style="border-left-color: #27ae60;">
+                <h2>🦖 The Age of Dinosaurs</h2>
+                <p>
+                    A focused look at the diversity of the Dinosauria clade (Saurischia & Ornithischia) throughout the
+                    Mesozoic Era.
+                </p>
+                <div id="dinoStats" class="stat-row"></div>
+            </div>
+            <div class="chart-container">
+                <div id="dinoChart" class="chart"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: DATA EXPLORER -->
+        <div id="explorer" class="section">
+            <div class="explanation" style="border-left-color: #34495e;">
+                <h2>🔍 Explore the Data</h2>
+                <p>
+                    <strong>Why only a sample?</strong> We are displaying <strong>5,000 records</strong> (prioritizing
+                    famous genera) out of the full <strong>1.2 Million</strong> in our database to keep the dashboard
+                    fast.
+                    <br><br>
+                    <strong>Why "duplicates"?</strong> Each row represents a <strong>unique fossil specimen</strong>
+                    found in the field. If you see multiple <em>Tyrannosaurus</em> rows, it means we have found many
+                    distinct T-Rex skeletons!
+                </p>
+
+                <input type="text" id="explorerSearch" placeholder="Search for a genus (e.g., Tyrannosaurus)..."
+                    style="width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ddd; border-radius: 4px; margin-top: 20px;">
+
+                <div
+                    style="background: #fff; margin-top: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #eee;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f8f9fa; border-bottom: 2px solid #eee;">
+                            <tr>
+                                <th style="padding: 15px; text-align: left;">Genus</th>
+                                <th style="padding: 15px; text-align: left;">Age Range (Ma)</th>
+                                <th style="padding: 15px; text-align: left;">Occurrences</th>
+                                <th style="padding: 15px; text-align: left;">Sample Reference</th>
+                            </tr>
+                        </thead>
+                        <tbody id="explorerBody"></tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <button id="prevBtn"
+                        style="padding: 10px 20px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px;">Previous</button>
+                    <span id="pageInfo" style="color: #7f8c8d;">Page 1</span>
+                    <button id="nextBtn"
+                        style="padding: 10px 20px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px;">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FUTURE IDEAS -->
+        <div class="future-list">
+            <h3>🚀 Future Analysis Ideas</h3>
+            <ul>
+                <li><strong>Bayesian Diversification Rates (PyRate):</strong> Use full MCMC to estimate
+                    origination/extinction rates with proper uncertainty intervals (requires significant compute).</li>
+                <li><strong>Paleo-Coordinates Animation:</strong> Animate the movement of continents and fossil
+                    occurrences over 500 million years using GPlates API.</li>
+                <li><strong>Morphometric Analysis:</strong> If trait data (body size, shape) is available, analyze the
+                    evolution of body forms (e.g., Cope's Rule).</li>
+                <li><strong>Community Detection:</strong> Use advanced network clustering to identify "bioregions"
+                    automatically and track how they merge/split.</li>
+                <li><strong>Preservation Bias Correction:</strong> Implement sophisticated sampling standardization
+                    (e.g., TRiPS) to correct for the "Pull of the Recent".</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <footer>
+        Analysis generated by Antigravity • Data provided by Paleobiology Database & Neotoma
+    </footer>
+
+    <script>
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        const layout = {
+            font: { family: 'Helvetica Neue, sans-serif', size: 14 },
+            margin: { t: 50, r: 30, b: 50, l: 60 },
+            showlegend: true,
+            legend: { orientation: 'h', y: 1.1 }
+        };
+
+        Promise.all([
+            fetch('web_data.json?v=' + Date.now()).then(r => r.json()),
+            fetch('climate_data.json?v=' + Date.now()).then(r => r.json()),
+            fetch('null_model_data.json?v=' + Date.now()).then(r => r.json()),
+            fetch('taxonomy_data.json?v=' + Date.now()).then(r => r.json())
+        ]).then(([webData, climateData, nullData, taxData]) => {
+
+            // 1. MODULARITY
+            Plotly.newPlot('modularityChart', [{
+                x: webData.sota.time.filter((_, i) => webData.sota.modularity[i] !== null),
+                y: webData.sota.modularity.filter(m => m !== null),
+                type: 'scatter', mode: 'lines+markers',
+                line: { color: '#3498db', width: 3 },
+                marker: { size: 8 }
+            }], {
+                ...layout,
+                // title: 'Biogeographic Modularity Over Time', // Removed redundant title
+                xaxis: { title: 'Time (Million Years Ago)', autorange: 'reversed' },
+                yaxis: { title: 'Modularity Score (Provincialism)' },
+                margin: { t: 20, r: 30, b: 50, l: 60 }
+            }, { displayModeBar: false });
+
+            // Null Model Stats
+            document.getElementById('nullModelStats').innerHTML = `
+                <div class="stat-box"><div class="stat-value">${nullData.observed_modularity.toFixed(3)}</div><div class="stat-label">Observed Score</div></div>
+                <div class="stat-box"><div class="stat-value" style="color: ${nullData.significant ? '#27ae60' : '#c0392b'}">p = ${nullData.p_value.toFixed(3)}</div><div class="stat-label">Significance</div></div>
+            `;
+
+            Plotly.newPlot('nullHistogram', [
+                { x: nullData.null_distribution, type: 'histogram', marker: { color: '#ecf0f1' }, name: 'Random Chance' },
+                { x: [nullData.observed_modularity], y: [5], type: 'scatter', mode: 'markers', marker: { size: 18, color: '#3498db', symbol: 'diamond' }, name: 'Observed Data' }
+            ], {
+                ...layout,
+                title: 'Observed vs. Random Worlds',
+                xaxis: { title: 'Modularity Score' },
+                yaxis: { showticklabels: false, title: '' },
+                showlegend: false,
+                margin: { t: 40, r: 30, b: 30, l: 30 }
+            }, { displayModeBar: false });
+
+            // 2. ML PREDICTION
+            Plotly.newPlot('mlChart', [{
+                x: webData.ml.importance,
+                y: webData.ml.features,
+                type: 'bar', orientation: 'h',
+                marker: { color: ['#bdc3c7', '#bdc3c7', '#e74c3c', '#bdc3c7'] }
+            }], {
+                ...layout,
+                // title: 'Feature Importance',
+                xaxis: { title: 'Relative Importance' },
+                yaxis: { autorange: 'reversed' },
+                margin: { t: 20, r: 30, b: 50, l: 100 }
+            }, { displayModeBar: false });
+
+            // 3. CLIMATE
+            Plotly.newPlot('climateChart', [
+                { x: climateData.timeseries.map(r => r.time), y: climateData.timeseries.map(r => r.diversity), name: 'Biodiversity', yaxis: 'y1', line: { color: '#3498db', width: 4 } },
+                { x: climateData.temperature_curve.map(r => r.time), y: climateData.temperature_curve.map(r => r.temperature), name: 'Temperature (°C)', yaxis: 'y2', line: { color: '#f39c12', width: 4, dash: 'dot' } }
+            ], {
+                ...layout,
+                // title: 'Global Diversity vs. Temperature', // Removed to fix collision
+                xaxis: { title: 'Time (Million Years Ago)', autorange: 'reversed' },
+                yaxis: { title: 'Number of Genera', side: 'left', showgrid: false },
+                yaxis2: { title: 'Global Temp (°C)', side: 'right', overlaying: 'y', showgrid: false },
+                legend: { orientation: 'h', x: 0.5, y: 1.1, xanchor: 'center' },
+                margin: { t: 50, r: 60, b: 50, l: 60 } // Adjusted margins
+            }, { displayModeBar: false });
+
+            document.getElementById('climateStats').innerHTML = `
+                <div class="stat-box"><div class="stat-value">${climateData.correlation.toFixed(3)}</div><div class="stat-label">Correlation Coefficient (r)</div></div>
+            `;
+
+            // 4. TAXONOMY
+            Plotly.newPlot('sunburstChart', [{
+                type: 'sunburst',
+                ids: taxData.sunburst.ids,
+                labels: taxData.sunburst.labels,
+                parents: taxData.sunburst.parents,
+                values: taxData.sunburst.values,
+                branchvalues: 'total',
+                marker: { line: { width: 2 } }
+            }], {
+                margin: { l: 0, r: 0, b: 0, t: 0 },
+                font: { size: 16 }
+            }, { displayModeBar: false });
+
+            // Survivor Champions Table
+            let survivorHTML = '<table style="width:100%; border-collapse: collapse; margin-top: 20px;"><thead><tr style="background:#f8f9fa; text-align:left;"><th style="padding:10px;">Rank</th><th style="padding:10px;">Genus</th><th style="padding:10px;">Duration</th><th style="padding:10px;">Range</th></tr></thead><tbody>';
+            taxData.survivors.slice(0, 10).forEach((s, i) => {
+                survivorHTML += `<tr style="border-bottom:1px solid #eee;"><td style="padding:10px;">#${i + 1}</td><td style="padding:10px; font-weight:bold;">${s.genus}</td><td style="padding:10px;">${s.duration.toFixed(1)} Myr</td><td style="padding:10px; color:#777;">${s.range}</td></tr>`;
+            });
+            survivorHTML += '</tbody></table>';
+            document.getElementById('survivorTable').innerHTML = survivorHTML;
+
+            // Dino Stats
+            const dStats = taxData.dino_stats;
+            document.getElementById('dinoStats').innerHTML = `
+                <div class="stat-box"><div class="stat-value">${dStats.total_genera}</div><div class="stat-label">Dino Genera</div></div>
+                <div class="stat-box"><div class="stat-value">${dStats.total_occurrences}</div><div class="stat-label">Fossils Found</div></div>
+            `;
+
+            Plotly.newPlot('dinoChart', [{
+                x: taxData.dino_chart.time,
+                y: taxData.dino_chart.diversity,
+                type: 'scatter', mode: 'lines', fill: 'tozeroy',
+                line: { color: '#27ae60', width: 3 }
+            }], {
+                ...layout,
+                // title: 'Dinosaur Diversity Over Time',
+                xaxis: { title: 'Time (Ma)', autorange: 'reversed' },
+                yaxis: { title: 'Genera Count' },
+                margin: { t: 20, r: 30, b: 50, l: 60 }
+            }, { displayModeBar: false });
+
+            // 5. DATA EXPLORER LOGIC
+            const tableBody = document.getElementById('explorerBody');
+            const searchInput = document.getElementById('explorerSearch');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+
+            // Convert summary arrays to object list
+            const explorerData = webData.map.genus.map((g, i) => ({
+                genus: g,
+                min_age: webData.map.min_age[i],
+                max_age: webData.map.max_age[i],
+                count: webData.map.count[i],
+                reference: webData.map.reference[i] || "Unknown"
+            }));
+
+            let currentPage = 1;
+            const rowsPerPage = 15;
+            let filteredData = explorerData;
+
+            function renderTable() {
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                const pageData = filteredData.slice(start, end);
+
+                tableBody.innerHTML = pageData.map(row => `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px; font-weight: bold;">${row.genus}</td>
+                        <td style="padding: 10px;">${row.max_age.toFixed(1)} - ${row.min_age.toFixed(1)} Ma</td>
+                        <td style="padding: 10px;">${row.count}</td>
+                        <td style="padding: 10px; font-style: italic; color: #555; font-size: 0.9em; max-width: 300px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" title="${row.reference}">${row.reference}</td>
+                    </tr>
+                `).join('');
+
+                pageInfo.innerText = `Page ${currentPage} of ${Math.ceil(filteredData.length / rowsPerPage)}`;
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage >= Math.ceil(filteredData.length / rowsPerPage);
+            }
+
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                filteredData = explorerData.filter(row => row.genus.toLowerCase().includes(term));
+                currentPage = 1;
+                renderTable();
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) { currentPage--; renderTable(); }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < Math.ceil(filteredData.length / rowsPerPage)) { currentPage++; renderTable(); }
+            });
+
+            renderTable(); // Initial render
+
+        });
+    </script>
+</body>
+
+</html>
