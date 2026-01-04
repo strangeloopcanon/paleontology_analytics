@@ -236,7 +236,7 @@
 			        <div id="pangea" class="section active">
 		            <div class="explanation">
 		                <h2>How “separated” were ecosystems long ago?</h2>
-		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <p><strong>Quick summary:</strong></p>
 		                <ul>
 		                    <li>We split the map into squares, then check which squares share the same genera.</li>
 		                    <li><strong>High score</strong> = regions look different from each other (more “separate”).</li>
@@ -255,7 +255,7 @@
 
 		            <div class="explanation" style="border-left-color: #9b59b6;">
 		                <h2>Is this just random?</h2>
-		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <p><strong>Quick summary:</strong></p>
 		                <ul>
 		                    <li>We keep the same number of fossils per place and per genus…</li>
 		                    <li>…but shuffle which genus goes with which place.</li>
@@ -273,7 +273,7 @@
 	        <div id="maps" class="section">
 	            <div class="explanation" style="border-left-color: #1abc9c;">
 	                <h2>Where are fossils on the ancient Earth?</h2>
-	                <p><strong>Simple summary (ELI10):</strong></p>
+	                <p><strong>Quick summary:</strong></p>
 	                <ul>
 	                    <li>Pick a time. We show a sample of fossil locations on a world map.</li>
 	                    <li>Most points use <strong>paleocoordinates</strong> (where the rocks were back then).</li>
@@ -290,7 +290,7 @@
 	        <div id="extinctions" class="section">
 	            <div class="explanation" style="border-left-color: #8e44ad;">
 	                <h2>When did lots of life disappear?</h2>
-	                <p><strong>Simple summary (ELI10):</strong></p>
+	                <p><strong>Quick summary:</strong></p>
 	                <ul>
 	                    <li>A spike in the purple line means many genera stop showing up in the next time bin.</li>
 	                    <li>We mark a few famous events (like the dinosaur-ending one at ~66 Ma).</li>
@@ -305,7 +305,7 @@
 
 	            <div class="explanation" style="border-left-color: #c0392b;">
 	                <h2>Before vs After (examples)</h2>
-	                <p><strong>Simple summary (ELI10):</strong> For each event, we compare a “before window” to an “after window” and show example genera.</p>
+	                <p><strong>Quick summary:</strong> For each event, we compare a “before window” to an “after window” and show example genera.</p>
 	                <div id="extinctionTable"></div>
 	            </div>
 	        </div>
@@ -314,7 +314,7 @@
 			        <div id="ml" class="section">
 		            <div class="explanation" style="border-left-color: #e74c3c;">
 		                <h2>Can a model guess who disappears next?</h2>
-		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <p><strong>Quick summary:</strong></p>
 		                <ul>
 		                    <li>We look at one time bin, then ask: “does this genus show up in the next bin?”</li>
 		                    <li>We feed the model simple clues: how widespread it is, how often it’s found, and its latitude spread.</li>
@@ -332,7 +332,7 @@
 		        <div id="climate" class="section">
 		            <div class="explanation" style="border-left-color: #f39c12;">
 		                <h2>Do warmer times have more genera?</h2>
-		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <p><strong>Quick summary:</strong></p>
 		                <ul>
 		                    <li>Blue line: how many genera show up in each time bin.</li>
 		                    <li>Orange line: a simple “how warm Earth was” curve.</li>
@@ -354,7 +354,7 @@
 	        <div id="taxonomy" class="section">
 	            <div class="explanation" style="border-left-color: #2ecc71;">
 	                <h2>What kinds of life are in the dataset?</h2>
-	                <p><strong>Simple summary (ELI10):</strong></p>
+	                <p><strong>Quick summary:</strong></p>
 	                <ul>
 	                    <li>This chart is a “category wheel”: phylum → class → order.</li>
 	                    <li>Bigger slices mean more records in this dataset (not “most important in nature”).</li>
@@ -366,13 +366,13 @@
 
 	            <div class="explanation" style="border-left-color: #f1c40f;">
 	                <h2>🏆 Survivor Champions</h2>
-	                <p><strong>Simple summary (ELI10):</strong> These genera show up across the biggest time span in this dataset.</p>
+	                <p><strong>Quick summary:</strong> These genera show up across the biggest time span in this dataset.</p>
 	                <div id="survivorTable"></div>
 	            </div>
 
 	            <div class="explanation" style="border-left-color: #27ae60;">
 	                <h2>🦖 The Age of Dinosaurs</h2>
-	                <p><strong>Simple summary (ELI10):</strong> A dino-focused filter, then “how many dino genera per time bin”.</p>
+	                <p><strong>Quick summary:</strong> A dino-focused filter, then “how many dino genera per time bin”.</p>
 	                <div id="dinoStats" class="stat-row"></div>
 	            </div>
             <div class="chart-container">
@@ -384,7 +384,7 @@
 		        <div id="explorer" class="section">
 		            <div class="explanation" style="border-left-color: #34495e;">
 		                <h2>🔍 Explore the Data</h2>
-		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <p><strong>Quick summary:</strong></p>
 		                <ul>
 		                    <li>One row per genus (not one row per fossil).</li>
 		                    <li>Age range = oldest to youngest finds in this dataset.</li>
@@ -584,9 +584,26 @@
 		            // 0. MAPS (animated)
 		            if (mapData && mapData.bins && mapData.bins.length) {
 		                const mapDiv = document.getElementById('paleoMap');
+		                const binKey = (b) => {
+		                    const n = Number(b);
+		                    if (Number.isFinite(n)) return (Math.round(n * 10) / 10).toFixed(1); // e.g. 530.0
+		                    return String(b);
+		                };
+		                const getPts = (b) => {
+		                    const candidates = [
+		                        binKey(b),
+		                        String(b),
+		                        String(Number(b)),
+		                        String(parseInt(Number(b), 10)),
+		                    ];
+		                    for (const k of candidates) {
+		                        if (mapData.points && mapData.points[k]) return mapData.points[k];
+		                    }
+		                    return { lat: [], lng: [] };
+		                };
 		                const bins = mapData.bins;
-		                const first = String(bins[0]);
-		                const firstPts = mapData.points[first] || { lat: [], lng: [] };
+		                const firstKey = binKey(bins[0]);
+		                const firstPts = getPts(bins[0]);
 
 		                const baseTrace = {
 		                    type: 'scattergeo',
@@ -598,8 +615,8 @@
 		                };
 
 		                const frames = bins.map(b => {
-		                    const key = String(b);
-		                    const pts = mapData.points[key] || { lat: [], lng: [] };
+		                    const key = binKey(b);
+		                    const pts = getPts(b);
 		                    return {
 		                        name: key,
 		                        data: [{
@@ -612,7 +629,7 @@
 		                const sliderSteps = bins.map(b => ({
 		                    label: `${fmt(b, 0)} Ma`,
 		                    method: 'animate',
-		                    args: [[String(b)], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } }]
+		                    args: [[binKey(b)], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } }]
 		                }));
 
 		                Plotly.newPlot(mapDiv, [baseTrace], {
@@ -651,6 +668,8 @@
 		                    }]
 		                }, { displayModeBar: false }).then(() => {
 		                    Plotly.addFrames(mapDiv, frames);
+		                    // Ensure the initial frame matches the initial data (in case key formats differ).
+		                    Plotly.animate(mapDiv, [firstKey], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } });
 		                });
 		            }
 
