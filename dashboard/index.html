@@ -220,18 +220,20 @@
         <p class="subtitle">Uncovering the hidden patterns of life's history</p>
     </header>
 
-    <nav class="nav">
-        <button class="active" onclick="showSection('pangea')">🌍 Pulse of Pangea</button>
-        <button onclick="showSection('ml')">🤖 AI Extinction Predictor</button>
-        <button onclick="showSection('climate')">🌡️ Climate Drivers</button>
-        <button onclick="showSection('taxonomy')">🦕 Life's Family Tree</button>
-        <button onclick="showSection('explorer')">🔍 Data Explorer</button>
-    </nav>
+	    <nav class="nav">
+	        <button class="active" onclick="showSection('pangea')">🌍 Pulse of Pangea</button>
+	        <button onclick="showSection('maps')">🗺️ Maps</button>
+	        <button onclick="showSection('extinctions')">💥 Mass Extinctions</button>
+	        <button onclick="showSection('ml')">🤖 AI Extinction Predictor</button>
+	        <button onclick="showSection('climate')">🌡️ Climate Drivers</button>
+	        <button onclick="showSection('taxonomy')">🦕 Life's Family Tree</button>
+	        <button onclick="showSection('explorer')">🔍 Data Explorer</button>
+	    </nav>
 
     <div class="container">
 
-        <!-- TAB 1: PULSE OF PANGEA -->
-		        <div id="pangea" class="section active">
+	        <!-- TAB 1: PULSE OF PANGEA -->
+			        <div id="pangea" class="section active">
 		            <div class="explanation">
 		                <h2>How “separated” were ecosystems long ago?</h2>
 		                <p><strong>Simple summary (ELI10):</strong></p>
@@ -265,10 +267,51 @@
             <div class="chart-container">
                 <div id="nullHistogram" class="chart" style="height: 350px;"></div>
             </div>
-        </div>
+	        </div>
 
-        <!-- TAB 2: AI EXTINCTION PREDICTOR -->
-		        <div id="ml" class="section">
+	        <!-- TAB 2: MAPS -->
+	        <div id="maps" class="section">
+	            <div class="explanation" style="border-left-color: #1abc9c;">
+	                <h2>Where are fossils on the ancient Earth?</h2>
+	                <p><strong>Simple summary (ELI10):</strong></p>
+	                <ul>
+	                    <li>Pick a time. We show a sample of fossil locations on a world map.</li>
+	                    <li>Most points use <strong>paleocoordinates</strong> (where the rocks were back then).</li>
+	                    <li>Use Play to watch the points move through time.</li>
+	                </ul>
+	            </div>
+
+	            <div class="chart-container">
+	                <div id="paleoMap" class="chart" style="height: 650px;"></div>
+	            </div>
+	        </div>
+
+	        <!-- TAB 3: MASS EXTINCTIONS -->
+	        <div id="extinctions" class="section">
+	            <div class="explanation" style="border-left-color: #8e44ad;">
+	                <h2>When did lots of life disappear?</h2>
+	                <p><strong>Simple summary (ELI10):</strong></p>
+	                <ul>
+	                    <li>A spike in the purple line means many genera stop showing up in the next time bin.</li>
+	                    <li>We mark a few famous events (like the dinosaur-ending one at ~66 Ma).</li>
+	                    <li>This is “what the database shows”, not a perfect measure of true global extinction.</li>
+	                </ul>
+	            </div>
+
+	            <div class="chart-container">
+	                <div id="extinctionRates" class="chart" style="height: 520px;"></div>
+	                <div id="extinctionStats" class="stat-row"></div>
+	            </div>
+
+	            <div class="explanation" style="border-left-color: #c0392b;">
+	                <h2>Before vs After (examples)</h2>
+	                <p><strong>Simple summary (ELI10):</strong> For each event, we compare a “before window” to an “after window” and show example genera.</p>
+	                <div id="extinctionTable"></div>
+	            </div>
+	        </div>
+
+	        <!-- TAB 2: AI EXTINCTION PREDICTOR -->
+			        <div id="ml" class="section">
 		            <div class="explanation" style="border-left-color: #e74c3c;">
 		                <h2>Can a model guess who disappears next?</h2>
 		                <p><strong>Simple summary (ELI10):</strong></p>
@@ -414,15 +457,18 @@
             legend: { orientation: 'h', y: 1.1 }
         };
 
-        Promise.all([
-            fetch('web_data.json?v=' + Date.now()).then(r => r.json()),
-            fetch('climate_data.json?v=' + Date.now()).then(r => r.json()),
-            fetch('null_model_data.json?v=' + Date.now()).then(r => r.json()),
-            fetch('taxonomy_data.json?v=' + Date.now()).then(r => r.json())
-	        ]).then(([webData, climateData, nullData, taxData]) => {
-	
-	            // 1. MODULARITY
-	            const fmt = (v, digits = 3) => (v === null || v === undefined || Number.isNaN(v)) ? 'NA' : Number(v).toFixed(digits);
+	        Promise.all([
+	            fetch('web_data.json?v=' + Date.now()).then(r => r.json()),
+	            fetch('map_points.json?v=' + Date.now()).then(r => r.json()),
+	            fetch('rates_data.json?v=' + Date.now()).then(r => r.json()),
+	            fetch('deep_time_data.json?v=' + Date.now()).then(r => r.json()),
+	            fetch('climate_data.json?v=' + Date.now()).then(r => r.json()),
+	            fetch('null_model_data.json?v=' + Date.now()).then(r => r.json()),
+	            fetch('taxonomy_data.json?v=' + Date.now()).then(r => r.json())
+		        ]).then(([webData, mapData, ratesData, deepTimeData, climateData, nullData, taxData]) => {
+		
+		            // 1. MODULARITY
+		            const fmt = (v, digits = 3) => (v === null || v === undefined || Number.isNaN(v)) ? 'NA' : Number(v).toFixed(digits);
 	
 	            if (webData.sota && webData.sota.time && webData.sota.time.length) {
 	                const t = webData.sota.time;
@@ -533,11 +579,167 @@
 	            document.getElementById('climateStats').innerHTML = `
 	                <div class="stat-box"><div class="stat-value">${climateData.correlation.toFixed(3)}</div><div class="stat-label">Correlation Coefficient (r)</div></div>
 	            `;
-	            document.getElementById('climateCorrInline').innerText = climateData.correlation.toFixed(3);
+		            document.getElementById('climateCorrInline').innerText = climateData.correlation.toFixed(3);
 
-            // 4. TAXONOMY
-            Plotly.newPlot('sunburstChart', [{
-                type: 'sunburst',
+		            // 0. MAPS (animated)
+		            if (mapData && mapData.bins && mapData.bins.length) {
+		                const mapDiv = document.getElementById('paleoMap');
+		                const bins = mapData.bins;
+		                const first = String(bins[0]);
+		                const firstPts = mapData.points[first] || { lat: [], lng: [] };
+
+		                const baseTrace = {
+		                    type: 'scattergeo',
+		                    mode: 'markers',
+		                    lat: firstPts.lat,
+		                    lon: firstPts.lng,
+		                    marker: { size: 4, color: '#16a085', opacity: 0.55 },
+		                    hoverinfo: 'skip'
+		                };
+
+		                const frames = bins.map(b => {
+		                    const key = String(b);
+		                    const pts = mapData.points[key] || { lat: [], lng: [] };
+		                    return {
+		                        name: key,
+		                        data: [{
+		                            lat: pts.lat,
+		                            lon: pts.lng
+		                        }]
+		                    };
+		                });
+
+		                const sliderSteps = bins.map(b => ({
+		                    label: `${fmt(b, 0)} Ma`,
+		                    method: 'animate',
+		                    args: [[String(b)], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } }]
+		                }));
+
+		                Plotly.newPlot(mapDiv, [baseTrace], {
+		                    ...layout,
+		                    geo: {
+		                        projection: { type: 'natural earth' },
+		                        showland: true,
+		                        landcolor: '#ecf0f1',
+		                        showcountries: false,
+		                        showocean: true,
+		                        oceancolor: '#f8fbff',
+		                        coastlinecolor: '#bdc3c7'
+		                    },
+		                    margin: { t: 20, r: 10, b: 10, l: 10 },
+		                    updatemenus: [{
+		                        type: 'buttons',
+		                        direction: 'left',
+		                        x: 0.02,
+		                        y: 0.02,
+		                        xanchor: 'left',
+		                        yanchor: 'bottom',
+		                        showactive: false,
+		                        buttons: [
+		                            { label: 'Play', method: 'animate', args: [null, { fromcurrent: true, frame: { duration: 250, redraw: true }, transition: { duration: 0 } }] },
+		                            { label: 'Pause', method: 'animate', args: [[null], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }] }
+		                        ]
+		                    }],
+		                    sliders: [{
+		                        x: 0.12,
+		                        y: 0.02,
+		                        xanchor: 'left',
+		                        yanchor: 'bottom',
+		                        currentvalue: { prefix: 'Time: ', suffix: ' Ma', font: { size: 14 } },
+		                        pad: { t: 0, b: 0 },
+		                        steps: sliderSteps
+		                    }]
+		                }, { displayModeBar: false }).then(() => {
+		                    Plotly.addFrames(mapDiv, frames);
+		                });
+		            }
+
+		            // 00. MASS EXTINCTIONS (rates + examples)
+		            if (ratesData && Array.isArray(ratesData) && ratesData.length) {
+		                const times = ratesData.map(r => r.time);
+		                const ext = ratesData.map(r => r.extinction_rate);
+		                const orig = ratesData.map(r => r.origination_rate);
+		                const total = ratesData.map(r => r.total_genera);
+
+		                const events = [
+		                    { name: 'End-Ordovician', time: 444 },
+		                    { name: 'Late Devonian', time: 372 },
+		                    { name: 'End-Permian', time: 252 },
+		                    { name: 'End-Triassic', time: 201 },
+		                    { name: 'End-Cretaceous', time: 66 }
+		                ];
+
+		                const shapes = events.map(e => ({
+		                    type: 'line',
+		                    xref: 'x',
+		                    yref: 'paper',
+		                    x0: e.time,
+		                    x1: e.time,
+		                    y0: 0,
+		                    y1: 1,
+		                    line: { color: 'rgba(142, 68, 173, 0.25)', width: 2, dash: 'dot' }
+		                }));
+
+		                Plotly.newPlot('extinctionRates', [
+		                    { x: times, y: ext, name: 'Extinction rate', type: 'scatter', mode: 'lines', line: { color: '#8e44ad', width: 4 } },
+		                    { x: times, y: orig, name: 'Origination rate', type: 'scatter', mode: 'lines', line: { color: '#27ae60', width: 3, dash: 'dot' } }
+		                ], {
+		                    ...layout,
+		                    xaxis: { title: 'Time (Million Years Ago)', autorange: 'reversed' },
+		                    yaxis: { title: 'Rate (fraction of genera per bin)' },
+		                    shapes,
+		                    margin: { t: 20, r: 30, b: 50, l: 70 }
+		                }, { displayModeBar: false });
+
+		                // Simple stats: biggest spike in the data
+		                let maxIdx = 0;
+		                for (let i = 1; i < ext.length; i++) if (ext[i] > ext[maxIdx]) maxIdx = i;
+		                document.getElementById('extinctionStats').innerHTML = `
+		                    <div class="stat-box"><div class="stat-value">${fmt(ext[maxIdx])}</div><div class="stat-label">Biggest Spike</div></div>
+		                    <div class="stat-box"><div class="stat-value">${fmt(times[maxIdx], 0)} Ma</div><div class="stat-label">Spike Time</div></div>
+		                    <div class="stat-box"><div class="stat-value">${total[maxIdx] ?? 'NA'}</div><div class="stat-label">Genera in Bin</div></div>
+		                `;
+		            }
+
+		            if (deepTimeData && deepTimeData.extinction_analysis) {
+		                const ea = deepTimeData.extinction_analysis;
+		                const rows = Object.keys(ea).map(name => {
+		                    const e = ea[name];
+		                    const survivors = (e.survivors || []).slice(0, 6).join(', ');
+		                    const victims = (e.victims || []).slice(0, 6).join(', ');
+		                    const newcomers = (e.newcomers || []).slice(0, 6).join(', ');
+		                    return `
+		                        <tr style="border-bottom:1px solid #eee;">
+		                            <td style="padding:10px; font-weight:bold;">${name}</td>
+		                            <td style="padding:10px;">${e.genera_before} → ${e.genera_after}</td>
+		                            <td style="padding:10px;">${fmt(e.survival_rate, 1)}%</td>
+		                            <td style="padding:10px; color:#555;">${survivors || '—'}</td>
+		                            <td style="padding:10px; color:#555;">${victims || '—'}</td>
+		                            <td style="padding:10px; color:#555;">${newcomers || '—'}</td>
+		                        </tr>
+		                    `;
+		                }).join('');
+
+		                document.getElementById('extinctionTable').innerHTML = `
+		                    <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+		                        <thead>
+		                            <tr style="background:#f8f9fa; text-align:left; border-bottom:2px solid #eee;">
+		                                <th style="padding:10px;">Event</th>
+		                                <th style="padding:10px;">Genera (before → after)</th>
+		                                <th style="padding:10px;">Survival</th>
+		                                <th style="padding:10px;">Example Survivors</th>
+		                                <th style="padding:10px;">Example Victims</th>
+		                                <th style="padding:10px;">Example Newcomers</th>
+		                            </tr>
+		                        </thead>
+		                        <tbody>${rows}</tbody>
+		                    </table>
+		                `;
+		            }
+
+		            // 4. TAXONOMY
+		            Plotly.newPlot('sunburstChart', [{
+		                type: 'sunburst',
                 ids: taxData.sunburst.ids,
                 labels: taxData.sunburst.labels,
                 parents: taxData.sunburst.parents,
