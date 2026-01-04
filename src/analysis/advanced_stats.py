@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
+from src.analysis.geo import add_analysis_coordinates, add_binned_locality
+
 def plot_biogeographic_network(data_path="data/processed/merged_occurrences.parquet", output_dir="data/analysis"):
     """
     Constructs and plots a biogeographic network.
@@ -20,12 +22,12 @@ def plot_biogeographic_network(data_path="data/processed/merged_occurrences.parq
         return
 
     # Filter valid data
-    df = df.dropna(subset=["lat", "lng", "genus"])
+    df = df.dropna(subset=["genus"])
+    df = add_analysis_coordinates(df)
+    df = df.dropna(subset=["analysis_lat", "analysis_lng"])
     
     # Bin localities (e.g., 5x5 degree grid) to reduce sparsity
-    df["lat_bin"] = (df["lat"] / 5).round() * 5
-    df["lng_bin"] = (df["lng"] / 5).round() * 5
-    df["locality"] = list(zip(df["lat_bin"], df["lng_bin"]))
+    df = add_binned_locality(df, bin_degrees=5.0)
 
     # Create Locality-by-Taxon Matrix
     # We want to see which localities share genera

@@ -6,6 +6,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
 
+from src.analysis.geo import add_analysis_coordinates, add_binned_locality
+
 def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parquet", output_dir="data/analysis"):
     """
     Machine Learning analysis to predict extinction risk.
@@ -30,13 +32,15 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
         return
 
     # Filter valid data
-    df = df.dropna(subset=["mid_ma", "genus", "lat", "lng"])
+    df = df.dropna(subset=["mid_ma", "genus"])
+    df = add_analysis_coordinates(df)
+    df = df.dropna(subset=["analysis_lat", "analysis_lng"])
     
     # Create time bins (5 Ma)
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
     
     # Create locality identifier
-    df["locality"] = list(zip((df["lat"] / 5).round() * 5, (df["lng"] / 5).round() * 5))
+    df = add_binned_locality(df, bin_degrees=5.0, locality_col="locality")
     
     # Get sorted unique time bins (oldest to youngest)
     time_bins = sorted(df["time_bin"].unique(), reverse=True)  # High Ma = older
@@ -60,7 +64,7 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
             # Features
             geographic_range = genus_data["locality"].nunique()
             abundance = len(genus_data)
-            lat_range = genus_data["lat"].max() - genus_data["lat"].min()
+            lat_range = genus_data["analysis_lat"].max() - genus_data["analysis_lat"].min()
             
             # Environment breadth (if available)
             if "environment" in genus_data.columns:

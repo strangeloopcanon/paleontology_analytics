@@ -2,10 +2,12 @@ import pandas as pd
 import numpy as np
 import json
 import os
-import networkx as nx
-from networkx.algorithms.community import greedy_modularity_communities
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, roc_auc_score
+
+from src.analysis.geo import add_analysis_coordinates, add_binned_locality
+from src.analysis.provinciality import compute_locality_network_modularity
 
 # Import analysis logic or re-implement simplified versions for export
 # To ensure consistency, we'll re-implement the core logic here to output pure JSON structure.
@@ -19,18 +21,15 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
         print(f"Error reading data: {e}")
         return
 
-    # Filter valid data
-    df = df.dropna(subset=["mid_ma", "genus", "lat", "lng"])
+    # Filter valid data (coordinates handled via analysis_lat/lng below)
+    df = df.dropna(subset=["mid_ma", "genus"])
+    df["mid_ma"] = pd.to_numeric(df["mid_ma"], errors="coerce")
+    df = df.dropna(subset=["mid_ma"])
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
-    
-    # Create a subsample for heavy calculations (Modularity, ML)
-    # 1.2M rows is too slow for real-time dashboard generation
-    # Reduced to 20k for speed (approx 200 points per bin)
-    if len(df) > 20000:
-        print(f"Subsampling dataset from {len(df)} to 20,000 for heavy analysis...")
-        df_heavy = df.sample(n=20000, random_state=42)
-    else:
-        df_heavy = df.copy()
+
+    # Prefer paleocoordinates when present; fall back to modern coords.
+    df = add_analysis_coordinates(df)
+    df_geo = df.dropna(subset=["analysis_lat", "analysis_lng"]).copy()
     
     # --- 1. Diversity Curve ---
     diversity = df.groupby("time_bin")["genus"].nunique().sort_index(ascending=False)
@@ -70,43 +69,61 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
         "reference": genus_summary["reference"].tolist()
     }
     
+    # --- 3. SOTA: Provinciality over time (network modularity) ---
+    # Goal: reduce jitter from uneven sampling by using a fixed per-bin sample size.
+    TIME_BIN_WIDTH_MA = 5.0
+    LOCALITY_BIN_DEG = 5.0
+    MIN_OCC_PER_BIN = 200
+    MAX_OCC_SAMPLE_PER_BIN = 5000
+    SMOOTH_WINDOW_MYR = 50.0
+    smooth_window_bins = max(1, int(round(SMOOTH_WINDOW_MYR / TIME_BIN_WIDTH_MA)))
+
     sota_results = []
-    df_heavy["lat_bin"] = (df_heavy["lat"] / 5).round() * 5
-    df_heavy["lng_bin"] = (df_heavy["lng"] / 5).round() * 5
-    df_heavy["locality"] = list(zip(df_heavy["lat_bin"], df_heavy["lng_bin"]))
-    
-    for time_bin, group in df_heavy.groupby("time_bin"):
-        if len(group) < 50: continue
-        
-        # Modularity
-        G = nx.Graph()
-        localities = group["locality"].unique()
-        genera = group["genus"].unique()
-        if len(localities) < 5 or len(genera) < 5: continue
-        
-        G.add_nodes_from(localities, bipartite=0)
-        G.add_nodes_from(genera, bipartite=1)
-        G.add_edges_from(list(zip(group["locality"], group["genus"])))
-        
-        try:
-            locality_nodes = {n for n, d in G.nodes(data=True) if d["bipartite"] == 0}
-            locality_graph = nx.bipartite.projected_graph(G, locality_nodes)
-            communities = greedy_modularity_communities(locality_graph)
-            modularity = nx.community.modularity(locality_graph, communities)
-        except:
-            modularity = None
-            
-        # Latitudinal Centroid
-        mean_abs_lat = group["lat"].abs().mean()
-        
-        sota_results.append({
-            "time": float(time_bin),
-            "modularity": modularity,
-            "mean_abs_lat": mean_abs_lat
-        })
-    
-    sota_results.sort(key=lambda x: x["time"], reverse=True)
-    
+
+    for time_bin, group in df_geo.groupby("time_bin"):
+        n_occ_total = int(len(group))
+        if n_occ_total < MIN_OCC_PER_BIN:
+            continue
+
+        # Fixed-size sampling per bin for comparability and stability.
+        n_sample = min(MAX_OCC_SAMPLE_PER_BIN, n_occ_total)
+        group_sample = group.sample(n=n_sample, random_state=42 + int(time_bin))
+        group_sample = add_binned_locality(
+            group_sample,
+            lat_col="analysis_lat",
+            lng_col="analysis_lng",
+            bin_degrees=LOCALITY_BIN_DEG,
+            locality_col="locality",
+        )
+
+        mod_res = compute_locality_network_modularity(group_sample, locality_col="locality", genus_col="genus")
+        mean_abs_lat = float(group_sample["analysis_lat"].abs().mean())
+
+        sota_results.append(
+            {
+                "time": float(time_bin),
+                "modularity": mod_res.modularity,
+                "mean_abs_lat": mean_abs_lat,
+                "n_occ_total": n_occ_total,
+                "n_occ_sample": int(n_sample),
+                "n_unique_edges": mod_res.n_unique_edges,
+                "n_localities": mod_res.n_localities,
+                "n_genera": mod_res.n_genera,
+            }
+        )
+
+    sota_df = pd.DataFrame(sota_results).sort_values("time", ascending=False)
+    if len(sota_df) > 0:
+        sota_df["modularity_smooth"] = (
+            sota_df["modularity"].astype(float).rolling(smooth_window_bins, center=True, min_periods=1).mean()
+        )
+        sota_df["mean_abs_lat_smooth"] = (
+            sota_df["mean_abs_lat"].astype(float).rolling(smooth_window_bins, center=True, min_periods=1).mean()
+        )
+    else:
+        sota_df["modularity_smooth"] = []
+        sota_df["mean_abs_lat_smooth"] = []
+
     # --- 3b. SQS Diversity ---
     # Simplified SQS calculation for export
     sqs_results = []
@@ -131,41 +148,73 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
     sqs_results.sort(key=lambda x: x["time"], reverse=True)
 
     # --- 4. ML Extinction ---
-    # Re-run simplified ML
-    time_bins = sorted(df_heavy["time_bin"].unique(), reverse=True)
-    ml_records = []
-    
-    for i, current_bin in enumerate(time_bins[:-1]):
-        next_bin = time_bins[i + 1]
-        current_data = df_heavy[df_heavy["time_bin"] == current_bin]
-        next_data = df_heavy[df_heavy["time_bin"] == next_bin]
-        next_genera = set(next_data["genus"].unique())
-        
-        for genus in current_data["genus"].unique():
-            genus_data = current_data[current_data["genus"] == genus]
-            older_bins = [b for b in time_bins if b > current_bin]
-            age = sum(1 for b in older_bins if genus in df_heavy[df_heavy["time_bin"] == b]["genus"].values)
-            
-            ml_records.append({
-                "geographic_range": genus_data["locality"].nunique(),
-                "abundance": len(genus_data),
-                "lat_range": genus_data["lat"].max() - genus_data["lat"].min(),
-                "age": age,
-                "extinct": 1 if genus not in next_genera else 0
-            })
-            
-    ml_df = pd.DataFrame(ml_records).fillna(0)
-    ml_data = {}
-    
-    if len(ml_df) > 100:
-        X = ml_df[["geographic_range", "abundance", "lat_range", "age"]]
-        y = ml_df["extinct"]
-        clf = RandomForestClassifier(n_estimators=50, random_state=42, class_weight='balanced')
-        clf.fit(X, y)
+    # Build a lightweight training set: sample occurrences (not rows) to keep dashboard generation fast.
+    MAX_ML_ROWS = 50_000
+    df_ml = df_geo
+    if len(df_ml) > MAX_ML_ROWS:
+        print(f"Subsampling dataset from {len(df_ml)} to {MAX_ML_ROWS:,} for ML...")
+        df_ml = df_ml.sample(n=MAX_ML_ROWS, random_state=42).copy()
+    else:
+        df_ml = df_ml.copy()
+
+    df_ml = add_binned_locality(df_ml, bin_degrees=LOCALITY_BIN_DEG, locality_col="locality")
+
+    # Per-genus-per-bin features
+    agg = (
+        df_ml.groupby(["time_bin", "genus"])
+        .agg(
+            geographic_range=("locality", "nunique"),
+            abundance=("genus", "size"),
+            lat_min=("analysis_lat", "min"),
+            lat_max=("analysis_lat", "max"),
+        )
+        .reset_index()
+    )
+    agg["lat_range"] = agg["lat_max"] - agg["lat_min"]
+
+    # "Age" = number of older bins the genus has already appeared in (within this sampled dataset)
+    presence = df_ml[["genus", "time_bin"]].drop_duplicates()
+    presence = presence.sort_values(["genus", "time_bin"], ascending=[True, False])
+    presence["age"] = presence.groupby("genus").cumcount()
+    agg = agg.merge(presence, on=["genus", "time_bin"], how="left")
+
+    # Target: extinct in next time bin?
+    time_bins = sorted(df_ml["time_bin"].unique(), reverse=True)
+    next_bin_map = {time_bins[i]: time_bins[i + 1] for i in range(len(time_bins) - 1)}
+    agg["next_bin"] = agg["time_bin"].map(next_bin_map)
+    agg = agg.dropna(subset=["next_bin"])
+    next_presence = presence.rename(columns={"time_bin": "next_bin"}).assign(in_next=1)[["genus", "next_bin", "in_next"]]
+    agg = agg.merge(next_presence, on=["genus", "next_bin"], how="left")
+    agg["extinct"] = (agg["in_next"].isna()).astype(int)
+
+    feature_cols = ["geographic_range", "abundance", "lat_range", "age"]
+    ml_data: dict = {}
+    if len(agg) > 200:
+        X = agg[feature_cols].fillna(0)
+        y = agg["extinct"]
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.3, random_state=42, stratify=y
+        )
+        clf = RandomForestClassifier(n_estimators=200, random_state=42, class_weight="balanced")
+        clf.fit(X_train, y_train)
+
+        y_pred = clf.predict(X_test)
+        try:
+            y_proba = clf.predict_proba(X_test)[:, 1]
+            roc_auc = float(roc_auc_score(y_test, y_proba))
+        except Exception:
+            roc_auc = 0.5
+
         ml_data = {
-            "features": ["Geographic Range", "Abundance", "Latitudinal Range", "Age"],
+            "features": ["Geographic Range", "Abundance", "Latitudinal Range", "Age (bins)"],
             "importance": clf.feature_importances_.tolist(),
-            "accuracy": clf.score(X, y) # Just training score for dashboard display
+            "metrics": {
+                "accuracy": float(accuracy_score(y_test, y_pred)),
+                "roc_auc": roc_auc,
+                "n_samples": int(len(agg)),
+                "extinction_rate": float(y.mean()),
+                "holdout_fraction": 0.3,
+            },
         }
 
     # --- Final JSON ---
@@ -177,9 +226,22 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
         },
         "map": explorer_data,
         "sota": {
-            "time": [r["time"] for r in sota_results],
-            "modularity": [r["modularity"] for r in sota_results],
-            "mean_abs_lat": [r["mean_abs_lat"] for r in sota_results]
+            "time": sota_df["time"].astype(float).tolist() if len(sota_df) else [],
+            "modularity": sota_df["modularity"].tolist() if len(sota_df) else [],
+            "modularity_smooth": sota_df["modularity_smooth"].tolist() if len(sota_df) else [],
+            "mean_abs_lat": sota_df["mean_abs_lat"].astype(float).tolist() if len(sota_df) else [],
+            "mean_abs_lat_smooth": sota_df["mean_abs_lat_smooth"].astype(float).tolist() if len(sota_df) else [],
+            "n_occ_total": sota_df["n_occ_total"].astype(int).tolist() if len(sota_df) else [],
+            "n_occ_sample": sota_df["n_occ_sample"].astype(int).tolist() if len(sota_df) else [],
+            "n_localities": sota_df["n_localities"].astype(int).tolist() if len(sota_df) else [],
+            "n_genera": sota_df["n_genera"].astype(int).tolist() if len(sota_df) else [],
+            "params": {
+                "time_bin_width_ma": TIME_BIN_WIDTH_MA,
+                "locality_bin_deg": LOCALITY_BIN_DEG,
+                "min_occ_per_bin": MIN_OCC_PER_BIN,
+                "max_occ_sample_per_bin": MAX_OCC_SAMPLE_PER_BIN,
+                "smooth_window_myr": SMOOTH_WINDOW_MYR,
+            },
         },
         "ml": ml_data
     }

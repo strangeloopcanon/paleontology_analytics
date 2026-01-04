@@ -221,32 +221,35 @@
     <div class="container">
 
         <!-- TAB 1: PULSE OF PANGEA -->
-        <div id="pangea" class="section active">
-            <div class="explanation">
-                <h2>How connected was the ancient world?</h2>
-                <p>
-                    We used <strong>Network Theory</strong> to measure "biogeographic modularity"—a score of how
-                    fragmented the world's ecosystems were.
-                    <br><br>
-                    <strong>Why it matters:</strong> High modularity means continents were isolated (like today),
-                    allowing distinct ecosystems to evolve. Low modularity means supercontinents like Pangea formed,
-                    allowing species to mix freely but often reducing global diversity.
-                </p>
-            </div>
+	        <div id="pangea" class="section active">
+	            <div class="explanation">
+	                <h2>How provincial was the ancient world?</h2>
+	                <p>
+	                    We used <strong>Network Theory</strong> to measure biogeographic <strong>provinciality</strong>—how
+	                    strongly fossil communities split into distinct regional clusters.
+	                    <br><br>
+	                    <strong>What this score is:</strong> network modularity of a locality–genus co-occurrence graph built in
+	                    <strong>paleocoordinate space when available</strong> (otherwise modern coordinates), using 5°×5° spatial bins.
+	                    <br><br>
+	                    <strong>How to read it:</strong> Higher modularity = stronger regional differentiation; lower modularity = more
+	                    homogenized assemblages. Continental configuration can influence this, but so can climate, sampling intensity,
+	                    and the binning/model choices—so treat it as a <em>proxy</em>, not a direct “Pangaea dial”.
+	                </p>
+	            </div>
 
             <div class="chart-container">
                 <div id="modularityChart" class="chart"></div>
             </div>
 
-            <div class="explanation" style="border-left-color: #9b59b6;">
-                <h2>Is this pattern real?</h2>
-                <p>
-                    To prove this isn't just noise, we ran a <strong>Null Model Test</strong>. We generated 100
-                    randomized worlds and compared them to our data. The result? Our observed modularity is
-                    statistically significant (p < 0.05), meaning these biogeographic barriers were real physical
-                        constraints, not random chance. </p>
-                        <div id="nullModelStats" class="stat-row"></div>
-            </div>
+	            <div class="explanation" style="border-left-color: #9b59b6;">
+	                <h2>Is this pattern real?</h2>
+	                <p>
+	                    We ran a <strong>Null Model Test</strong> on a well-sampled time bin: shuffle genus labels across locality–genus
+	                    edges (preserving the number of occurrences per locality and overall genus frequencies), then recompute modularity.
+	                    If the observed value is far into the tail, the structure is unlikely to be explained by random mixing alone.
+	                </p>
+	                        <div id="nullModelStats" class="stat-row"></div>
+	            </div>
 
             <div class="chart-container">
                 <div id="nullHistogram" class="chart" style="height: 350px;"></div>
@@ -254,41 +257,38 @@
         </div>
 
         <!-- TAB 2: AI EXTINCTION PREDICTOR -->
-        <div id="ml" class="section">
-            <div class="explanation" style="border-left-color: #e74c3c;">
-                <h2>Can AI predict who survives?</h2>
-                <p>
-                    We trained a <strong>Random Forest Classifier</strong> on thousands of fossil genera to find the
-                    hidden "rules" of extinction. Instead of just guessing, the AI looked at geographic range,
-                    abundance, and age to predict if a genus would survive to the next time bin.
-                    <br><br>
-                    <strong>The Discovery:</strong> The most important predictor wasn't abundance or age—it was
-                    <strong>Latitudinal Range</strong>. Species that could survive in many different temperatures (high
-                    latitudinal range) were much harder to kill.
-                </p>
-            </div>
+	        <div id="ml" class="section">
+	            <div class="explanation" style="border-left-color: #e74c3c;">
+	                <h2>Can AI predict who survives?</h2>
+	                <p>
+	                    We trained a <strong>Random Forest</strong> to predict whether a genus disappears in the next time bin,
+	                    using simple features computed from occurrences: geographic spread, abundance, latitudinal range, and “age” (bins observed).
+	                    <br><br>
+	                    <strong>Important:</strong> This is a toy model on a sampled dataset; the metrics shown are on a held‑out test split.
+	                    It’s meant to be exploratory, not a causal claim.
+	                </p>
+	            </div>
 
-            <div class="chart-container">
-                <div id="mlChart" class="chart"></div>
-            </div>
-        </div>
+	            <div class="chart-container">
+	                <div id="mlChart" class="chart"></div>
+	                <div id="mlStats" class="stat-row"></div>
+	            </div>
+	        </div>
 
         <!-- TAB 3: CLIMATE DRIVERS -->
-        <div id="climate" class="section">
-            <div class="explanation" style="border-left-color: #f39c12;">
-                <h2>Does temperature control biodiversity?</h2>
-                <p>
-                    The "Holy Grail" of paleobiology is linking biological change to physical earth systems. Here, we
-                    correlate our global diversity curve against the full Phanerozoic temperature curve (540 Ma to
-                    Present).
-                    <br><br>
-                    <strong>The Result:</strong> We found a correlation of <strong>r = 0.24</strong>.
-                    <br><br>
-                    This moderate correlation suggests that while climate is a factor, it is not the <em>sole</em>
-                    driver. Life's history is complex, influenced by mass extinctions, continental drift, and
-                    evolutionary innovation, not just the thermometer.
-                </p>
-            </div>
+	        <div id="climate" class="section">
+	            <div class="explanation" style="border-left-color: #f39c12;">
+	                <h2>Does temperature control biodiversity?</h2>
+	                <p>
+	                    We correlate a global genus richness curve against a simplified Phanerozoic temperature proxy (piecewise interpolation of
+	                    published anchor points) to ask: do warmer worlds tend to have higher diversity?
+	                    <br><br>
+	                    <strong>The Result:</strong> We found a correlation of <strong>r = <span id="climateCorrInline">…</span></strong>.
+	                    <br><br>
+	                    Correlation ≠ causation: mass extinctions, sampling biases, and tectonics can all move the diversity curve. Treat this as a
+	                    quick sanity check, not a mechanistic model.
+	                </p>
+	            </div>
 
             <div class="chart-container">
                 <div id="climateChart" class="chart"></div>
@@ -331,18 +331,13 @@
         </div>
 
         <!-- TAB 5: DATA EXPLORER -->
-        <div id="explorer" class="section">
-            <div class="explanation" style="border-left-color: #34495e;">
-                <h2>🔍 Explore the Data</h2>
-                <p>
-                    <strong>Why only a sample?</strong> We are displaying <strong>5,000 records</strong> (prioritizing
-                    famous genera) out of the full <strong>1.2 Million</strong> in our database to keep the dashboard
-                    fast.
-                    <br><br>
-                    <strong>Why "duplicates"?</strong> Each row represents a <strong>unique fossil specimen</strong>
-                    found in the field. If you see multiple <em>Tyrannosaurus</em> rows, it means we have found many
-                    distinct T-Rex skeletons!
-                </p>
+	        <div id="explorer" class="section">
+	            <div class="explanation" style="border-left-color: #34495e;">
+	                <h2>🔍 Explore the Data</h2>
+	                <p>
+	                    This table is a <strong>genus-level summary</strong> (one row per genus), including its observed age range,
+	                    occurrence count, and a representative reference. It’s precomputed so the dashboard stays fast.
+	                </p>
 
                 <input type="text" id="explorerSearch" placeholder="Search for a genus (e.g., Tyrannosaurus)..."
                     style="width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ddd; border-radius: 4px; margin-top: 20px;">
@@ -415,58 +410,106 @@
             fetch('climate_data.json?v=' + Date.now()).then(r => r.json()),
             fetch('null_model_data.json?v=' + Date.now()).then(r => r.json()),
             fetch('taxonomy_data.json?v=' + Date.now()).then(r => r.json())
-        ]).then(([webData, climateData, nullData, taxData]) => {
-
-            // 1. MODULARITY
-            Plotly.newPlot('modularityChart', [{
-                x: webData.sota.time.filter((_, i) => webData.sota.modularity[i] !== null),
-                y: webData.sota.modularity.filter(m => m !== null),
-                type: 'scatter', mode: 'lines+markers',
-                line: { color: '#3498db', width: 3 },
-                marker: { size: 8 }
-            }], {
-                ...layout,
-                // title: 'Biogeographic Modularity Over Time', // Removed redundant title
-                xaxis: { title: 'Time (Million Years Ago)', autorange: 'reversed' },
-                yaxis: { title: 'Modularity Score (Provincialism)' },
-                margin: { t: 20, r: 30, b: 50, l: 60 }
-            }, { displayModeBar: false });
-
-            // Null Model Stats
-            document.getElementById('nullModelStats').innerHTML = `
-                <div class="stat-box"><div class="stat-value">${nullData.observed_modularity.toFixed(3)}</div><div class="stat-label">Observed Score</div></div>
-                <div class="stat-box"><div class="stat-value" style="color: ${nullData.significant ? '#27ae60' : '#c0392b'}">p = ${nullData.p_value.toFixed(3)}</div><div class="stat-label">Significance</div></div>
-            `;
-
-            Plotly.newPlot('nullHistogram', [
-                { x: nullData.null_distribution, type: 'histogram', marker: { color: '#ecf0f1' }, name: 'Random Chance' },
-                { x: [nullData.observed_modularity], y: [5], type: 'scatter', mode: 'markers', marker: { size: 18, color: '#3498db', symbol: 'diamond' }, name: 'Observed Data' }
-            ], {
-                ...layout,
-                title: 'Observed vs. Random Worlds',
-                xaxis: { title: 'Modularity Score' },
-                yaxis: { showticklabels: false, title: '' },
-                showlegend: false,
-                margin: { t: 40, r: 30, b: 30, l: 30 }
-            }, { displayModeBar: false });
-
-            // 2. ML PREDICTION
-            Plotly.newPlot('mlChart', [{
-                x: webData.ml.importance,
-                y: webData.ml.features,
-                type: 'bar', orientation: 'h',
-                marker: { color: ['#bdc3c7', '#bdc3c7', '#e74c3c', '#bdc3c7'] }
-            }], {
-                ...layout,
-                // title: 'Feature Importance',
-                xaxis: { title: 'Relative Importance' },
-                yaxis: { autorange: 'reversed' },
-                margin: { t: 20, r: 30, b: 50, l: 100 }
-            }, { displayModeBar: false });
-
-            // 3. CLIMATE
-            Plotly.newPlot('climateChart', [
-                { x: climateData.timeseries.map(r => r.time), y: climateData.timeseries.map(r => r.diversity), name: 'Biodiversity', yaxis: 'y1', line: { color: '#3498db', width: 4 } },
+	        ]).then(([webData, climateData, nullData, taxData]) => {
+	
+	            // 1. MODULARITY
+	            const fmt = (v, digits = 3) => (v === null || v === undefined || Number.isNaN(v)) ? 'NA' : Number(v).toFixed(digits);
+	
+	            if (webData.sota && webData.sota.time && webData.sota.time.length) {
+	                const t = webData.sota.time;
+	                const y = webData.sota.modularity || [];
+	                const ySmooth = webData.sota.modularity_smooth || [];
+	                const nOcc = webData.sota.n_occ_total || [];
+	                const nLoc = webData.sota.n_localities || [];
+	                const nGen = webData.sota.n_genera || [];
+	
+	                const markerSizes = t.map((_, i) => {
+	                    const n = Number(nOcc[i] || 0);
+	                    const s = 6 + Math.log10(n + 1) * 4;
+	                    return Math.max(6, Math.min(18, s));
+	                });
+	
+	                const hover = t.map((_, i) =>
+	                    `Time: ${t[i]} Ma<br>` +
+	                    `Modularity: ${fmt(y[i])}<br>` +
+	                    `Occurrences: ${nOcc[i] ?? 'NA'}<br>` +
+	                    `Localities: ${nLoc[i] ?? 'NA'}<br>` +
+	                    `Genera: ${nGen[i] ?? 'NA'}`
+	                );
+	
+	                Plotly.newPlot('modularityChart', [
+	                    {
+	                        x: t, y: ySmooth,
+	                        type: 'scatter', mode: 'lines',
+	                        name: `Smoothed (${webData.sota.params?.smooth_window_myr ?? 50} Myr)`,
+	                        line: { color: '#2c3e50', width: 5 },
+	                        hoverinfo: 'skip'
+	                    },
+	                    {
+	                        x: t, y: y,
+	                        type: 'scatter', mode: 'lines+markers',
+	                        name: 'Raw (per-bin sample)',
+	                        line: { color: '#3498db', width: 2 },
+	                        marker: { size: markerSizes, color: '#3498db', opacity: 0.7 },
+	                        text: hover,
+	                        hoverinfo: 'text'
+	                    }
+	                ], {
+	                    ...layout,
+	                    xaxis: { title: 'Time (Million Years Ago)', autorange: 'reversed' },
+	                    yaxis: { title: 'Network Modularity (Provinciality)' },
+	                    margin: { t: 20, r: 30, b: 50, l: 60 }
+	                }, { displayModeBar: false });
+	            }
+	
+	            // Null Model Stats
+	            if (nullData && typeof nullData.p_value !== 'undefined') {
+	                document.getElementById('nullModelStats').innerHTML = `
+	                    <div class="stat-box"><div class="stat-value">${fmt(nullData.observed_modularity)}</div><div class="stat-label">Observed Modularity</div></div>
+	                    <div class="stat-box"><div class="stat-value" style="color: ${nullData.significant ? '#27ae60' : '#c0392b'}">p = ${fmt(nullData.p_value)}</div><div class="stat-label">Permutation p-value</div></div>
+	                    <div class="stat-box"><div class="stat-value">${fmt(nullData.time_bin, 0)} Ma</div><div class="stat-label">Test Bin</div></div>
+	                `;
+	            }
+	
+	            Plotly.newPlot('nullHistogram', [
+	                { x: nullData.null_distribution, type: 'histogram', marker: { color: '#ecf0f1' }, name: 'Random Chance' },
+	                { x: [nullData.observed_modularity], y: [5], type: 'scatter', mode: 'markers', marker: { size: 18, color: '#3498db', symbol: 'diamond' }, name: 'Observed Data' }
+	            ], {
+	                ...layout,
+	                title: `Observed vs. Random Mixing (bin ~${fmt(nullData.time_bin, 0)} Ma)`,
+	                xaxis: { title: 'Modularity Score' },
+	                yaxis: { showticklabels: false, title: '' },
+	                showlegend: false,
+	                margin: { t: 40, r: 30, b: 30, l: 30 }
+	            }, { displayModeBar: false });
+	
+	            // 2. ML PREDICTION
+	            if (webData.ml && webData.ml.importance && webData.ml.features) {
+	                Plotly.newPlot('mlChart', [{
+	                    x: webData.ml.importance,
+	                    y: webData.ml.features,
+	                    type: 'bar', orientation: 'h',
+	                    marker: { color: ['#bdc3c7', '#bdc3c7', '#e74c3c', '#bdc3c7'] }
+	                }], {
+	                    ...layout,
+	                    xaxis: { title: 'Relative Importance' },
+	                    yaxis: { autorange: 'reversed' },
+	                    margin: { t: 20, r: 30, b: 50, l: 120 }
+	                }, { displayModeBar: false });
+	
+	                const m = webData.ml.metrics || {};
+	                document.getElementById('mlStats').innerHTML = `
+	                    <div class="stat-box"><div class="stat-value">${fmt(m.roc_auc)}</div><div class="stat-label">Holdout ROC-AUC</div></div>
+	                    <div class="stat-box"><div class="stat-value">${fmt(m.accuracy)}</div><div class="stat-label">Holdout Accuracy</div></div>
+	                    <div class="stat-box"><div class="stat-value">${m.n_samples ?? 'NA'}</div><div class="stat-label">Genus-bin Samples</div></div>
+	                `;
+	            } else {
+	                document.getElementById('mlChart').innerHTML = '<p style="color:#777; padding: 10px;">Not enough data to train the model.</p>';
+	            }
+	
+	            // 3. CLIMATE
+	            Plotly.newPlot('climateChart', [
+	                { x: climateData.timeseries.map(r => r.time), y: climateData.timeseries.map(r => r.diversity), name: 'Biodiversity', yaxis: 'y1', line: { color: '#3498db', width: 4 } },
                 { x: climateData.temperature_curve.map(r => r.time), y: climateData.temperature_curve.map(r => r.temperature), name: 'Temperature (°C)', yaxis: 'y2', line: { color: '#f39c12', width: 4, dash: 'dot' } }
             ], {
                 ...layout,
@@ -477,10 +520,11 @@
                 legend: { orientation: 'h', x: 0.5, y: 1.1, xanchor: 'center' },
                 margin: { t: 50, r: 60, b: 50, l: 60 } // Adjusted margins
             }, { displayModeBar: false });
-
-            document.getElementById('climateStats').innerHTML = `
-                <div class="stat-box"><div class="stat-value">${climateData.correlation.toFixed(3)}</div><div class="stat-label">Correlation Coefficient (r)</div></div>
-            `;
+	
+	            document.getElementById('climateStats').innerHTML = `
+	                <div class="stat-box"><div class="stat-value">${climateData.correlation.toFixed(3)}</div><div class="stat-label">Correlation Coefficient (r)</div></div>
+	            `;
+	            document.getElementById('climateCorrInline').innerText = climateData.correlation.toFixed(3);
 
             // 4. TAXONOMY
             Plotly.newPlot('sunburstChart', [{

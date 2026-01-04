@@ -3,6 +3,9 @@ import numpy as np
 import json
 import os
 
+from src.analysis.geo import add_analysis_coordinates, add_binned_locality
+from src.analysis.provinciality import compute_locality_network_modularity
+
 def calculate_rates(data_path="data/processed/merged_occurrences.parquet", output_file="dashboard/rates_data.json"):
     """
     Calculate origination and extinction rates per time bin.
@@ -149,74 +152,57 @@ def calculate_climate_correlation(data_path="data/processed/merged_occurrences.p
 
 def calculate_null_model(data_path="data/processed/merged_occurrences.parquet", output_file="dashboard/null_model_data.json", n_iterations=100):
     """
-    Generate null distribution for modularity to test significance.
+    Generate a null distribution for provinciality (network modularity) to test against random mixing.
     """
-    import networkx as nx
-    from networkx.algorithms.community import greedy_modularity_communities
-    
     print(f"Running null model test ({n_iterations} iterations)...")
     
     df = pd.read_parquet(data_path)
-    df = df.dropna(subset=["mid_ma", "genus", "lat", "lng"])
+    df = df.dropna(subset=["mid_ma", "genus"])
+    df = add_analysis_coordinates(df)
+    df = df.dropna(subset=["analysis_lat", "analysis_lng"])
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
-    df["lat_bin"] = (df["lat"] / 5).round() * 5
-    df["lng_bin"] = (df["lng"] / 5).round() * 5
-    df["locality"] = list(zip(df["lat_bin"], df["lng_bin"]))
+    df = add_binned_locality(df, bin_degrees=5.0, locality_col="locality")
     
     # Pick a representative time bin with good data
     bin_sizes = df.groupby("time_bin").size()
     target_bin = bin_sizes.idxmax()  # Use the bin with most data
     
     group = df[df["time_bin"] == target_bin]
-    localities = list(group["locality"].unique())
-    genera = list(group["genus"].unique())
-    
-    if len(localities) < 10 or len(genera) < 10:
+    if group["locality"].nunique() < 10 or group["genus"].nunique() < 10:
         print("Insufficient data for null model test")
         return
-    
-    # Build real network
-    G = nx.Graph()
-    G.add_nodes_from(localities, bipartite=0)
-    G.add_nodes_from(genera, bipartite=1)
-    G.add_edges_from(list(zip(group["locality"], group["genus"])))
-    
-    locality_nodes = {n for n, d in G.nodes(data=True) if d["bipartite"] == 0}
-    locality_graph = nx.bipartite.projected_graph(G, locality_nodes)
-    
-    communities = greedy_modularity_communities(locality_graph)
-    observed_modularity = nx.community.modularity(locality_graph, communities)
-    
-    # Null distribution: shuffle genus assignments
+
+    edges_df = group[["locality", "genus"]].dropna().drop_duplicates().reset_index(drop=True)
+    observed_res = compute_locality_network_modularity(edges_df, locality_col="locality", genus_col="genus", min_localities=10, min_genera=10)
+    observed_modularity = observed_res.modularity
+
+    # Null distribution: shuffle genus labels across locality–genus edges (keeps locality degree + genus frequency)
     null_modularities = []
-    edges = list(zip(group["locality"], group["genus"]))
-    
+
     for _ in range(n_iterations):
-        shuffled_genera = np.random.permutation(group["genus"].values)
-        shuffled_edges = list(zip(group["locality"], shuffled_genera))
-        
-        G_null = nx.Graph()
-        G_null.add_nodes_from(localities, bipartite=0)
-        G_null.add_nodes_from(genera, bipartite=1)
-        G_null.add_edges_from(shuffled_edges)
-        
-        try:
-            null_locality_graph = nx.bipartite.projected_graph(G_null, locality_nodes)
-            null_communities = greedy_modularity_communities(null_locality_graph)
-            null_mod = nx.community.modularity(null_locality_graph, null_communities)
-            null_modularities.append(null_mod)
-        except:
-            pass
+        shuffled_edges_df = edges_df.copy()
+        shuffled_edges_df["genus"] = np.random.permutation(shuffled_edges_df["genus"].values)
+        null_res = compute_locality_network_modularity(
+            shuffled_edges_df, locality_col="locality", genus_col="genus", min_localities=10, min_genera=10
+        )
+        if null_res.modularity is not None:
+            null_modularities.append(float(null_res.modularity))
     
     # Calculate p-value
-    p_value = sum(1 for m in null_modularities if m >= observed_modularity) / len(null_modularities)
+    if observed_modularity is None or len(null_modularities) == 0:
+        p_value = 1.0
+    else:
+        p_value = sum(1 for m in null_modularities if m >= observed_modularity) / len(null_modularities)
     
     output = {
         "observed_modularity": observed_modularity,
         "null_distribution": null_modularities,
         "p_value": p_value,
         "time_bin": float(target_bin),
-        "significant": p_value < 0.05
+        "significant": bool(p_value < 0.05),
+        "n_edges": int(len(edges_df)),
+        "n_localities": int(edges_df["locality"].nunique()),
+        "n_genera": int(edges_df["genus"].nunique()),
     }
     
     with open(output_file, "w") as f:

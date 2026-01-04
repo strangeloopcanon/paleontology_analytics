@@ -9,6 +9,10 @@ OCCURRENCE_SCHEMA = {
     "mid_ma": "float64",
     "lat": "float64",
     "lng": "float64",
+    # Paleocoordinates (when provided by the source, e.g. PBDB `show=paleoloc`)
+    # These are reconstructed positions at the occurrence age, not modern coordinates.
+    "paleolat": "float64",
+    "paleolng": "float64",
     "phylum": "string",
     "class": "string",
     "order": "string",
@@ -29,6 +33,8 @@ PBDB_MAPPING = {
     "min_ma": "min_ma",
     "lat": "lat",
     "lng": "lng",
+    "paleolat": "paleolat",
+    "paleolng": "paleolng",
     "phylum": "phylum",
     "class": "class",
     "order": "order",

@@ -100,12 +100,12 @@ with tab3:
     
     with col1:
         if os.path.exists(f"{ANALYSIS_DIR}/modularity_over_time.png"):
-            st.image(f"{ANALYSIS_DIR}/modularity_over_time.png", caption="Modularity (Provincialism) Over Time")
+            st.image(f"{ANALYSIS_DIR}/modularity_over_time.png", caption="Network Modularity (Provinciality Proxy) Over Time")
         else:
             st.info("No modularity plot found. Run SOTA analysis.")
         
         if os.path.exists(f"{ANALYSIS_DIR}/latitudinal_shift.png"):
-            st.image(f"{ANALYSIS_DIR}/latitudinal_shift.png", caption="Latitudinal Shift of Diversity")
+            st.image(f"{ANALYSIS_DIR}/latitudinal_shift.png", caption="Latitudinal Shift of Occurrence Distribution")
         else:
             st.info("No latitudinal shift plot found. Run SOTA analysis.")
     

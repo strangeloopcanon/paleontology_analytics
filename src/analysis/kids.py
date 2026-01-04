@@ -3,6 +3,8 @@ import numpy as np
 import json
 import os
 
+from src.analysis.geo import add_analysis_coordinates
+
 def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", output_dir="dashboard"):
     """
     Generate DATA-DRIVEN insights for kids - using actual database facts, not generic info.
@@ -11,6 +13,7 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
     
     df = pd.read_parquet(data_path)
     df = df.dropna(subset=["mid_ma", "genus"])
+    df = add_analysis_coordinates(df)
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
     
     # ========== 12-YEAR-OLD: DEEP TIME INSIGHTS (SMART, DATA-DRIVEN) ==========
@@ -55,9 +58,9 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
         })
     
     # 3. Geographic Spread Champions
-    df_geo = df.dropna(subset=["lat", "lng"])
-    df_geo["lat_bin"] = (df_geo["lat"] / 10).round() * 10
-    df_geo["lng_bin"] = (df_geo["lng"] / 10).round() * 10
+    df_geo = df.dropna(subset=["analysis_lat", "analysis_lng"])
+    df_geo["lat_bin"] = (df_geo["analysis_lat"] / 10).round() * 10
+    df_geo["lng_bin"] = (df_geo["analysis_lng"] / 10).round() * 10
     
     genus_spread = df_geo.groupby("genus").apply(
         lambda x: len(x.groupby(["lat_bin", "lng_bin"]))
@@ -129,7 +132,7 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
     
     # Filter to Mesozoic
     dino_df = df[(df["mid_ma"] <= 252) & (df["mid_ma"] >= 66)]
-    dino_df = dino_df.dropna(subset=["lat", "lng"])
+    dino_df = dino_df.dropna(subset=["analysis_lat", "analysis_lng"])
     
     mesozoic_genera = dino_df["genus"].unique()
     mesozoic_count = len(mesozoic_genera)
@@ -150,7 +153,7 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
     
     # Geographic distribution
     dino_by_region = dino_df.groupby(
-        [(dino_df["lat"] > 0).map({True: "Northern", False: "Southern"})]
+        [(dino_df["analysis_lat"] > 0).map({True: "Northern", False: "Southern"})]
     )["genus"].nunique()
     
     # Time distribution
@@ -182,8 +185,8 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
     
     # Dino Map Data
     dino_map = {
-        "lat": dino_df["lat"].sample(min(2000, len(dino_df)), random_state=42).tolist(),
-        "lng": dino_df["lng"].sample(min(2000, len(dino_df)), random_state=42).tolist()
+        "lat": dino_df["analysis_lat"].sample(min(2000, len(dino_df)), random_state=42).tolist(),
+        "lng": dino_df["analysis_lng"].sample(min(2000, len(dino_df)), random_state=42).tolist()
     }
     
     dino_zone_data = {

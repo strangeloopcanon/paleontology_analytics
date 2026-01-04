@@ -1,14 +1,15 @@
 import pandas as pd
-import networkx as nx
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-from networkx.algorithms.community import greedy_modularity_communities
+
+from src.analysis.geo import add_analysis_coordinates, add_binned_locality
+from src.analysis.provinciality import compute_locality_network_modularity
 
 def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.parquet", output_dir="data/analysis"):
     """
     Performs 'The Pulse of Pangea' analysis:
-    1. Time-series of Network Modularity (Provincialism).
+    1. Time-series of Network Modularity (Provinciality proxy).
     2. Time-series of Latitudinal Centroids.
     3. Correlation between Modularity and Diversity.
     """
@@ -23,15 +24,15 @@ def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.
         return
 
     # Filter valid data
-    df = df.dropna(subset=["mid_ma", "lat", "lng", "genus"])
+    df = df.dropna(subset=["mid_ma", "genus"])
+    df = add_analysis_coordinates(df)
+    df = df.dropna(subset=["analysis_lat", "analysis_lng"])
     
     # Create time bins (e.g., 5 Ma)
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
     
     # Bin localities for network construction
-    df["lat_bin"] = (df["lat"] / 5).round() * 5
-    df["lng_bin"] = (df["lng"] / 5).round() * 5
-    df["locality"] = list(zip(df["lat_bin"], df["lng_bin"]))
+    df = add_binned_locality(df, bin_degrees=5.0)
 
     results = []
     
@@ -43,36 +44,14 @@ def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.
         if len(group) < 100: # Minimum occurrences
             continue
             
-        # 1. Calculate Modularity
-        # Construct bipartite graph (Locality-Genus)
-        G = nx.Graph()
-        localities = group["locality"].unique()
-        genera = group["genus"].unique()
-        
-        if len(localities) < 5 or len(genera) < 5:
-            continue
-            
-        G.add_nodes_from(localities, bipartite=0)
-        G.add_nodes_from(genera, bipartite=1)
-        G.add_edges_from(list(zip(group["locality"], group["genus"])))
-        
-        # Project to Locality network
-        locality_nodes = {n for n, d in G.nodes(data=True) if d["bipartite"] == 0}
-        
-        try:
-            locality_graph = nx.bipartite.projected_graph(G, locality_nodes)
-            
-            # Calculate modularity
-            # Using greedy modularity optimization
-            communities = greedy_modularity_communities(locality_graph)
-            modularity = nx.community.modularity(locality_graph, communities)
-        except:
-            modularity = np.nan
+        # 1. Calculate Modularity (Provinciality proxy)
+        res = compute_locality_network_modularity(group, locality_col="locality", genus_col="genus")
+        modularity = res.modularity if res.modularity is not None else np.nan
 
         # 2. Calculate Latitudinal Centroid
         # Weighted by occurrence count? Or just mean of occurrences?
         # Let's do mean absolute latitude of occurrences to see contraction/expansion
-        mean_abs_lat = group["lat"].abs().mean()
+        mean_abs_lat = group["analysis_lat"].abs().mean()
         
         # 3. Diversity (Raw Genus Count for simplicity here, or use SQS if integrated)
         diversity = group["genus"].nunique()
@@ -89,11 +68,11 @@ def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.
     
     # Plot 1: Modularity vs Time
     plt.figure(figsize=(10, 6))
-    plt.plot(results_df["time_bin"], results_df["modularity"], marker='o', label="Modularity (Provincialism)")
+    plt.plot(results_df["time_bin"], results_df["modularity"], marker='o', label="Network Modularity (Provinciality)")
     plt.gca().invert_xaxis()
     plt.xlabel("Time (Ma)")
     plt.ylabel("Network Modularity")
-    plt.title("Evolution of Biogeographic Provincialism")
+    plt.title("Evolution of Biogeographic Provinciality (Co-occurrence Network)")
     plt.grid(True)
     plt.savefig(os.path.join(output_dir, "modularity_over_time.png"))
     
@@ -103,7 +82,7 @@ def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.
     plt.gca().invert_xaxis()
     plt.xlabel("Time (Ma)")
     plt.ylabel("Mean Absolute Latitude (degrees)")
-    plt.title("Latitudinal Shift of Diversity")
+    plt.title("Latitudinal Shift of Occurrence Distribution")
     plt.grid(True)
     plt.savefig(os.path.join(output_dir, "latitudinal_shift.png"))
     

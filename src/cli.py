@@ -7,6 +7,7 @@ from src.analysis.basic_stats import plot_diversity_curve, plot_map
 from src.analysis.advanced_stats import plot_biogeographic_network, calculate_sqs_diversity
 from src.analysis.sota_stats import analyze_biogeographic_dynamics
 from src.analysis.ml_extinction import run_ml_extinction_analysis
+from src.analysis.build_dashboard import build_dashboard_assets
 
 def main():
     parser = argparse.ArgumentParser(description="Paleontology Data Pipeline CLI")
@@ -26,7 +27,13 @@ def main():
 
     # Analyze command
     analyze_parser = subparsers.add_parser("analyze", help="Run analysis")
-    analyze_parser.add_argument("--type", type=str, default="basic", choices=["basic", "advanced", "sota", "ml"], help="Type of analysis")
+    analyze_parser.add_argument(
+        "--type",
+        type=str,
+        default="basic",
+        choices=["basic", "advanced", "sota", "ml", "dashboard"],
+        help="Type of analysis",
+    )
     analyze_parser.add_argument("--input", type=str, default="data/processed/merged_occurrences.parquet", help="Input file")
     analyze_parser.add_argument("--output", type=str, default="data/analysis", help="Output directory")
 
@@ -55,6 +62,8 @@ def main():
             analyze_biogeographic_dynamics(data_path=args.input, output_dir=args.output)
         elif args.type == "ml":
             run_ml_extinction_analysis(data_path=args.input, output_dir=args.output)
+        elif args.type == "dashboard":
+            build_dashboard_assets(data_path=args.input, dashboard_dir="dashboard")
     else:
         parser.print_help()
 
