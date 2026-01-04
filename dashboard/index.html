@@ -126,6 +126,16 @@
             margin-bottom: 0;
         }
 
+        .explanation ul {
+            margin: 12px 0 0 20px;
+            color: #555;
+            font-size: 1.05em;
+        }
+
+        .explanation li {
+            margin: 6px 0;
+        }
+
         .chart-container {
             background: #fff;
             padding: 20px;
@@ -221,35 +231,36 @@
     <div class="container">
 
         <!-- TAB 1: PULSE OF PANGEA -->
-	        <div id="pangea" class="section active">
-	            <div class="explanation">
-	                <h2>How provincial was the ancient world?</h2>
-	                <p>
-	                    We used <strong>Network Theory</strong> to measure biogeographic <strong>provinciality</strong>—how
-	                    strongly fossil communities split into distinct regional clusters.
-	                    <br><br>
-	                    <strong>What this score is:</strong> network modularity of a locality–genus co-occurrence graph built in
-	                    <strong>paleocoordinate space when available</strong> (otherwise modern coordinates), using 5°×5° spatial bins.
-	                    <br><br>
-	                    <strong>How to read it:</strong> Higher modularity = stronger regional differentiation; lower modularity = more
-	                    homogenized assemblages. Continental configuration can influence this, but so can climate, sampling intensity,
-	                    and the binning/model choices—so treat it as a <em>proxy</em>, not a direct “Pangaea dial”.
-	                </p>
-	            </div>
+		        <div id="pangea" class="section active">
+		            <div class="explanation">
+		                <h2>How “separated” were ecosystems long ago?</h2>
+		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <ul>
+		                    <li>We split the map into squares, then check which squares share the same genera.</li>
+		                    <li><strong>High score</strong> = regions look different from each other (more “separate”).</li>
+		                    <li><strong>Low score</strong> = regions look similar (more “mixed together”).</li>
+		                </ul>
+		                <p style="margin-top: 12px;">
+		                    <strong>What this score really is:</strong> a network “clumpiness” number (modularity) built from locality ↔ genus links.
+		                    It uses <strong>paleocoordinates</strong> when available (otherwise modern coordinates), with 5°×5° bins. It’s a helpful proxy,
+		                    but it can also be influenced by sampling and climate.
+		                </p>
+		            </div>
 
             <div class="chart-container">
                 <div id="modularityChart" class="chart"></div>
             </div>
 
-	            <div class="explanation" style="border-left-color: #9b59b6;">
-	                <h2>Is this pattern real?</h2>
-	                <p>
-	                    We ran a <strong>Null Model Test</strong> on a well-sampled time bin: shuffle genus labels across locality–genus
-	                    edges (preserving the number of occurrences per locality and overall genus frequencies), then recompute modularity.
-	                    If the observed value is far into the tail, the structure is unlikely to be explained by random mixing alone.
-	                </p>
-	                        <div id="nullModelStats" class="stat-row"></div>
-	            </div>
+		            <div class="explanation" style="border-left-color: #9b59b6;">
+		                <h2>Is this just random?</h2>
+		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <ul>
+		                    <li>We keep the same number of fossils per place and per genus…</li>
+		                    <li>…but shuffle which genus goes with which place.</li>
+		                    <li>If the real score is much higher than the shuffled scores, the pattern is likely real.</li>
+		                </ul>
+		                <div id="nullModelStats" class="stat-row"></div>
+		            </div>
 
             <div class="chart-container">
                 <div id="nullHistogram" class="chart" style="height: 350px;"></div>
@@ -257,17 +268,16 @@
         </div>
 
         <!-- TAB 2: AI EXTINCTION PREDICTOR -->
-	        <div id="ml" class="section">
-	            <div class="explanation" style="border-left-color: #e74c3c;">
-	                <h2>Can AI predict who survives?</h2>
-	                <p>
-	                    We trained a <strong>Random Forest</strong> to predict whether a genus disappears in the next time bin,
-	                    using simple features computed from occurrences: geographic spread, abundance, latitudinal range, and “age” (bins observed).
-	                    <br><br>
-	                    <strong>Important:</strong> This is a toy model on a sampled dataset; the metrics shown are on a held‑out test split.
-	                    It’s meant to be exploratory, not a causal claim.
-	                </p>
-	            </div>
+		        <div id="ml" class="section">
+		            <div class="explanation" style="border-left-color: #e74c3c;">
+		                <h2>Can a model guess who disappears next?</h2>
+		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <ul>
+		                    <li>We look at one time bin, then ask: “does this genus show up in the next bin?”</li>
+		                    <li>We feed the model simple clues: how widespread it is, how often it’s found, and its latitude spread.</li>
+		                    <li>The scores below are from a held‑out test split, but this is still a rough, “for learning” model.</li>
+		                </ul>
+		            </div>
 
 	            <div class="chart-container">
 	                <div id="mlChart" class="chart"></div>
@@ -276,19 +286,20 @@
 	        </div>
 
         <!-- TAB 3: CLIMATE DRIVERS -->
-	        <div id="climate" class="section">
-	            <div class="explanation" style="border-left-color: #f39c12;">
-	                <h2>Does temperature control biodiversity?</h2>
-	                <p>
-	                    We correlate a global genus richness curve against a simplified Phanerozoic temperature proxy (piecewise interpolation of
-	                    published anchor points) to ask: do warmer worlds tend to have higher diversity?
-	                    <br><br>
-	                    <strong>The Result:</strong> We found a correlation of <strong>r = <span id="climateCorrInline">…</span></strong>.
-	                    <br><br>
-	                    Correlation ≠ causation: mass extinctions, sampling biases, and tectonics can all move the diversity curve. Treat this as a
-	                    quick sanity check, not a mechanistic model.
-	                </p>
-	            </div>
+		        <div id="climate" class="section">
+		            <div class="explanation" style="border-left-color: #f39c12;">
+		                <h2>Do warmer times have more genera?</h2>
+		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <ul>
+		                    <li>Blue line: how many genera show up in each time bin.</li>
+		                    <li>Orange line: a simple “how warm Earth was” curve.</li>
+		                    <li>We measure how much they move together: <strong>r = <span id="climateCorrInline">…</span></strong>.</li>
+		                </ul>
+		                <p style="margin-top: 12px;">
+		                    Big warning: this is <strong>not</strong> proof that temperature causes diversity changes. Extinctions, rock availability,
+		                    and sampling can also change what we see.
+		                </p>
+		            </div>
 
             <div class="chart-container">
                 <div id="climateChart" class="chart"></div>
@@ -297,50 +308,48 @@
         </div>
 
         <!-- TAB 4: TAXONOMY & DINOSAURS -->
-        <div id="taxonomy" class="section">
-            <div class="explanation" style="border-left-color: #2ecc71;">
-                <h2>The Shape of Life</h2>
-                <p>
-                    Explore the hierarchical structure of life in our database. The inner circles represent Phyla,
-                    branching out into Classes and Orders.
-                </p>
-            </div>
+	        <div id="taxonomy" class="section">
+	            <div class="explanation" style="border-left-color: #2ecc71;">
+	                <h2>What kinds of life are in the dataset?</h2>
+	                <p><strong>Simple summary (ELI10):</strong></p>
+	                <ul>
+	                    <li>This chart is a “category wheel”: phylum → class → order.</li>
+	                    <li>Bigger slices mean more records in this dataset (not “most important in nature”).</li>
+	                </ul>
+	            </div>
             <div class="chart-container">
                 <div id="sunburstChart" class="chart" style="height: 700px;"></div>
             </div>
 
-            <div class="explanation" style="border-left-color: #f1c40f;">
-                <h2>🏆 Survivor Champions</h2>
-                <p>
-                    Which genera stood the test of time? These are the longest-living organisms in our database record.
-                </p>
-                <div id="survivorTable"></div>
-            </div>
+	            <div class="explanation" style="border-left-color: #f1c40f;">
+	                <h2>🏆 Survivor Champions</h2>
+	                <p><strong>Simple summary (ELI10):</strong> These genera show up across the biggest time span in this dataset.</p>
+	                <div id="survivorTable"></div>
+	            </div>
 
-            <div class="explanation" style="border-left-color: #27ae60;">
-                <h2>🦖 The Age of Dinosaurs</h2>
-                <p>
-                    A focused look at the diversity of the Dinosauria clade (Saurischia & Ornithischia) throughout the
-                    Mesozoic Era.
-                </p>
-                <div id="dinoStats" class="stat-row"></div>
-            </div>
+	            <div class="explanation" style="border-left-color: #27ae60;">
+	                <h2>🦖 The Age of Dinosaurs</h2>
+	                <p><strong>Simple summary (ELI10):</strong> A dino-focused filter, then “how many dino genera per time bin”.</p>
+	                <div id="dinoStats" class="stat-row"></div>
+	            </div>
             <div class="chart-container">
                 <div id="dinoChart" class="chart"></div>
             </div>
         </div>
 
         <!-- TAB 5: DATA EXPLORER -->
-	        <div id="explorer" class="section">
-	            <div class="explanation" style="border-left-color: #34495e;">
-	                <h2>🔍 Explore the Data</h2>
-	                <p>
-	                    This table is a <strong>genus-level summary</strong> (one row per genus), including its observed age range,
-	                    occurrence count, and a representative reference. It’s precomputed so the dashboard stays fast.
-	                </p>
+		        <div id="explorer" class="section">
+		            <div class="explanation" style="border-left-color: #34495e;">
+		                <h2>🔍 Explore the Data</h2>
+		                <p><strong>Simple summary (ELI10):</strong></p>
+		                <ul>
+		                    <li>One row per genus (not one row per fossil).</li>
+		                    <li>Age range = oldest to youngest finds in this dataset.</li>
+		                    <li>Occurrences = how many records mention that genus.</li>
+		                </ul>
 
-                <input type="text" id="explorerSearch" placeholder="Search for a genus (e.g., Tyrannosaurus)..."
-                    style="width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ddd; border-radius: 4px; margin-top: 20px;">
+	                <input type="text" id="explorerSearch" placeholder="Search for a genus (e.g., Tyrannosaurus)..."
+	                    style="width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ddd; border-radius: 4px; margin-top: 20px;">
 
                 <div
                     style="background: #fff; margin-top: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #eee;">
