@@ -5,6 +5,7 @@ import os
 import numpy as np
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
+from src.analysis.cleaning import clean_taxon_series
 
 def plot_biogeographic_network(data_path="data/processed/merged_occurrences.parquet", output_dir="data/analysis"):
     """
@@ -22,6 +23,7 @@ def plot_biogeographic_network(data_path="data/processed/merged_occurrences.parq
         return
 
     # Filter valid data
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["genus"])
     df = add_analysis_coordinates(df)
     df = df.dropna(subset=["analysis_lat", "analysis_lng"])
@@ -86,6 +88,8 @@ def calculate_sqs_diversity(data_path="data/processed/merged_occurrences.parquet
         return
 
     df = df.dropna(subset=["mid_ma", "genus"])
+    df["genus"] = clean_taxon_series(df["genus"])
+    df = df.dropna(subset=["genus"])
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
     
     # Group by time bin

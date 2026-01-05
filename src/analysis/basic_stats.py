@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+from src.analysis.cleaning import clean_taxon_series
+
 def plot_diversity_curve(data_path="data/processed/occurrences.parquet", output_dir="data/analysis"):
     """
     Plots a simple diversity curve (number of genera per time bin).
@@ -17,6 +19,7 @@ def plot_diversity_curve(data_path="data/processed/occurrences.parquet", output_
         return
 
     # Filter for valid time data
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
 
     # Create 5my bins

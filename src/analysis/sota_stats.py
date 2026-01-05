@@ -5,6 +5,7 @@ import numpy as np
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
 from src.analysis.provinciality import compute_locality_network_modularity
+from src.analysis.cleaning import clean_taxon_series
 
 def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.parquet", output_dir="data/analysis"):
     """
@@ -24,6 +25,7 @@ def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.
         return
 
     # Filter valid data
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
     df = add_analysis_coordinates(df)
     df = df.dropna(subset=["analysis_lat", "analysis_lng"])

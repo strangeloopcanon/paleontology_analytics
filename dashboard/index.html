@@ -220,15 +220,15 @@
         <p class="subtitle">Uncovering the hidden patterns of life's history</p>
     </header>
 
-	    <nav class="nav">
-	        <button class="active" onclick="showSection('pangea')">🌍 Pulse of Pangea</button>
-	        <button onclick="showSection('maps')">🗺️ Maps</button>
-	        <button onclick="showSection('extinctions')">💥 Mass Extinctions</button>
-	        <button onclick="showSection('ml')">🤖 AI Extinction Predictor</button>
-	        <button onclick="showSection('climate')">🌡️ Climate Drivers</button>
-	        <button onclick="showSection('taxonomy')">🦕 Life's Family Tree</button>
-	        <button onclick="showSection('explorer')">🔍 Data Explorer</button>
-	    </nav>
+		    <nav class="nav">
+		        <button class="active" onclick="showSection('pangea', this)">🌍 Pulse of Pangea</button>
+		        <button onclick="showSection('maps', this)">🗺️ Maps</button>
+		        <button onclick="showSection('extinctions', this)">💥 Mass Extinctions</button>
+		        <button onclick="showSection('ml', this)">🤖 AI Extinction Predictor</button>
+		        <button onclick="showSection('climate', this)">🌡️ Climate Drivers</button>
+		        <button onclick="showSection('taxonomy', this)">🦕 Life's Family Tree</button>
+		        <button onclick="showSection('explorer', this)">🔍 Data Explorer</button>
+		    </nav>
 
     <div class="container">
 
@@ -242,27 +242,29 @@
 		                    <li><strong>High score</strong> = regions look different from each other (more “separate”).</li>
 		                    <li><strong>Low score</strong> = regions look similar (more “mixed together”).</li>
 		                </ul>
-		                <p style="margin-top: 12px;">
-		                    <strong>What this score really is:</strong> a network “clumpiness” number (modularity) built from locality ↔ genus links.
-		                    It uses <strong>paleocoordinates</strong> when available (otherwise modern coordinates), with 5°×5° bins. It’s a helpful proxy,
-		                    but it can also be influenced by sampling and climate.
-		                </p>
-		            </div>
+			                <p style="margin-top: 12px;">
+			                    <strong>What this score really is:</strong> a network “clumpiness” number (modularity) built from locality ↔ genus links.
+			                    It uses <strong>paleocoordinates</strong> when available (otherwise modern coordinates), with 5°×5° bins. It’s a helpful proxy,
+			                    but it can also be influenced by sampling and climate. Modularity also has known limitations (including a “resolution limit”),
+			                    so treat it as a trend/indicator, not a ground‑truth measure of biogeographic provinces.
+			                </p>
+			            </div>
 
             <div class="chart-container">
                 <div id="modularityChart" class="chart"></div>
             </div>
 
-		            <div class="explanation" style="border-left-color: #9b59b6;">
-		                <h2>Is this just random?</h2>
-		                <p><strong>Quick summary:</strong></p>
-		                <ul>
-		                    <li>We keep the same number of fossils per place and per genus…</li>
-		                    <li>…but shuffle which genus goes with which place.</li>
-		                    <li>If the real score is much higher than the shuffled scores, the pattern is likely real.</li>
-		                </ul>
-		                <div id="nullModelStats" class="stat-row"></div>
-		            </div>
+			            <div class="explanation" style="border-left-color: #9b59b6;">
+			                <h2>Is this just random?</h2>
+			                <p><strong>Quick summary:</strong></p>
+			                <ul>
+			                    <li>We keep how many (unique) genera each map square has…</li>
+			                    <li>…and how many squares each genus appears in…</li>
+			                    <li>…then shuffle genus labels across square ↔ genus links.</li>
+			                    <li>If the real score is much higher than the shuffled scores, the pattern is likely real.</li>
+			                </ul>
+			                <div id="nullModelStats" class="stat-row"></div>
+			            </div>
 
             <div class="chart-container">
                 <div id="nullHistogram" class="chart" style="height: 350px;"></div>
@@ -288,15 +290,15 @@
 
 	        <!-- TAB 3: MASS EXTINCTIONS -->
 	        <div id="extinctions" class="section">
-	            <div class="explanation" style="border-left-color: #8e44ad;">
-	                <h2>When did lots of life disappear?</h2>
-	                <p><strong>Quick summary:</strong></p>
-	                <ul>
-	                    <li>A spike in the purple line means many genera stop showing up in the next time bin.</li>
-	                    <li>We mark a few famous events (like the dinosaur-ending one at ~66 Ma).</li>
-	                    <li>This is “what the database shows”, not a perfect measure of true global extinction.</li>
-	                </ul>
-	            </div>
+		            <div class="explanation" style="border-left-color: #8e44ad;">
+		                <h2>When did lots of life disappear?</h2>
+		                <p><strong>Quick summary:</strong></p>
+		                <ul>
+		                    <li>A spike in the purple line means many genera are present in one bin but missing in the next (younger) bin.</li>
+		                    <li>We mark a few famous events (like the dinosaur-ending one at ~66 Ma).</li>
+		                    <li>This is “what the database shows”, not a perfect measure of true global extinction.</li>
+		                </ul>
+		            </div>
 
 	            <div class="chart-container">
 	                <div id="extinctionRates" class="chart" style="height: 520px;"></div>
@@ -311,22 +313,24 @@
 	        </div>
 
 	        <!-- TAB 2: AI EXTINCTION PREDICTOR -->
-			        <div id="ml" class="section">
-		            <div class="explanation" style="border-left-color: #e74c3c;">
-		                <h2>Can a model guess who disappears next?</h2>
-		                <p><strong>Quick summary:</strong></p>
-		                <ul>
-		                    <li>We look at one time bin, then ask: “does this genus show up in the next bin?”</li>
-		                    <li>We feed the model simple clues: how widespread it is, how often it’s found, and its latitude spread.</li>
-		                    <li>The scores below are from a held‑out test split, but this is still a rough, “for learning” model.</li>
-		                </ul>
-		            </div>
+				        <div id="ml" class="section">
+			            <div class="explanation" style="border-left-color: #e74c3c;">
+			                <h2>Can a model guess who disappears next?</h2>
+			                <p><strong>Quick summary:</strong></p>
+			                <ul>
+			                    <li>We look at one time bin, then ask: “does this genus show up in the next bin?”</li>
+			                    <li>We feed the model simple clues: how widespread it is, how often it’s found, and its latitude spread.</li>
+			                    <li>The scores below are from a held‑out split with <strong>no genus overlap</strong> (more honest than random row splits).</li>
+			                    <li>This is still a rough, “for learning” model — not a causal claim or a conservation tool.</li>
+			                </ul>
+			            </div>
 
-	            <div class="chart-container">
-	                <div id="mlChart" class="chart"></div>
-	                <div id="mlStats" class="stat-row"></div>
-	            </div>
-	        </div>
+		            <div class="chart-container">
+		                <div id="mlChart" class="chart"></div>
+		                <div id="mlStats" class="stat-row"></div>
+		                <div id="mlConfusion"></div>
+		            </div>
+		        </div>
 
         <!-- TAB 3: CLIMATE DRIVERS -->
 		        <div id="climate" class="section">
@@ -364,17 +368,25 @@
                 <div id="sunburstChart" class="chart" style="height: 700px;"></div>
             </div>
 
-	            <div class="explanation" style="border-left-color: #f1c40f;">
-	                <h2>🏆 Survivor Champions</h2>
-	                <p><strong>Quick summary:</strong> These genera show up across the biggest time span in this dataset.</p>
-	                <div id="survivorTable"></div>
-	            </div>
+		            <div class="explanation" style="border-left-color: #f1c40f;">
+		                <h2>🏆 Survivor Champions</h2>
+		                <p><strong>Quick summary:</strong> These genera show up across the biggest time span in this dataset.</p>
+		                <p style="margin-top: 10px;">
+		                    <strong>Important context:</strong> some long‑lived “genera” here are trace‑fossil <em>ichnogenera</em> (behavioral labels),
+		                    which can persist across many unrelated lineages — so don’t read this as “the same organism survived for 400+ Myr.”
+		                </p>
+		                <div id="survivorTable"></div>
+		            </div>
 
-	            <div class="explanation" style="border-left-color: #27ae60;">
-	                <h2>🦖 The Age of Dinosaurs</h2>
-	                <p><strong>Quick summary:</strong> A dino-focused filter, then “how many dino genera per time bin”.</p>
-	                <div id="dinoStats" class="stat-row"></div>
-	            </div>
+		            <div class="explanation" style="border-left-color: #27ae60;">
+		                <h2>🦖 The Age of Dinosaurs</h2>
+		                <p><strong>Quick summary:</strong> A dino-focused filter, then “how many dino genera per time bin”.</p>
+		                <p style="margin-top: 10px;">
+		                    <strong>Note:</strong> counts reflect this dataset (and may include synonyms, uncertain assignments, and some trace fossils),
+		                    not a curated “official” list of dinosaur genera.
+		                </p>
+		                <div id="dinoStats" class="stat-row"></div>
+		            </div>
             <div class="chart-container">
                 <div id="dinoChart" class="chart"></div>
             </div>
@@ -443,54 +455,153 @@
     </footer>
 
     <script>
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.target.classList.add('active');
-        }
+	        function showSection(id, btn) {
+	            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+	            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+	            document.getElementById(id).classList.add('active');
+	            if (btn) btn.classList.add('active');
+	            if (id === 'explorer') ensureExplorerLoaded();
+	        }
 
-        const layout = {
-            font: { family: 'Helvetica Neue, sans-serif', size: 14 },
-            margin: { t: 50, r: 30, b: 50, l: 60 },
-            showlegend: true,
-            legend: { orientation: 'h', y: 1.1 }
-        };
+	        const layout = {
+	            font: { family: 'Helvetica Neue, sans-serif', size: 14 },
+	            margin: { t: 50, r: 30, b: 50, l: 60 },
+	            showlegend: true,
+	            legend: { orientation: 'h', y: 1.1 }
+	        };
 
-	        Promise.all([
-	            fetch('web_data.json?v=' + Date.now()).then(r => r.json()),
-	            fetch('map_points.json?v=' + Date.now()).then(r => r.json()),
-	            fetch('rates_data.json?v=' + Date.now()).then(r => r.json()),
-	            fetch('deep_time_data.json?v=' + Date.now()).then(r => r.json()),
-	            fetch('climate_data.json?v=' + Date.now()).then(r => r.json()),
-	            fetch('null_model_data.json?v=' + Date.now()).then(r => r.json()),
-	            fetch('taxonomy_data.json?v=' + Date.now()).then(r => r.json())
-		        ]).then(([webData, mapData, ratesData, deepTimeData, climateData, nullData, taxData]) => {
+	        // Data Explorer is large, so load it only when opened.
+	        let explorerInitialized = false;
+	        let explorerInitPromise = null;
+
+	        function initExplorer(explorerPayload) {
+	            if (explorerInitialized) return;
+	            explorerInitialized = true;
+
+	            const tableBody = document.getElementById('explorerBody');
+	            const searchInput = document.getElementById('explorerSearch');
+	            const prevBtn = document.getElementById('prevBtn');
+	            const nextBtn = document.getElementById('nextBtn');
+	            const pageInfo = document.getElementById('pageInfo');
+
+	            const src = explorerPayload?.map || explorerPayload || {};
+	            const explorerData = (src.genus || []).map((g, i) => ({
+	                genus: g,
+	                min_age: src.min_age?.[i],
+	                max_age: src.max_age?.[i],
+	                count: src.count?.[i],
+	                reference: src.reference?.[i] || "Unknown"
+	            }));
+
+	            let currentPage = 1;
+	            const rowsPerPage = 15;
+	            let filteredData = explorerData;
+
+	            function renderTable() {
+	                if (!tableBody) return;
+	                const start = (currentPage - 1) * rowsPerPage;
+	                const end = start + rowsPerPage;
+	                const pageData = filteredData.slice(start, end);
+
+	                tableBody.innerHTML = pageData.map(row => `
+	                    <tr style="border-bottom: 1px solid #eee;">
+	                        <td style="padding: 10px; font-weight: bold;">${row.genus}</td>
+	                        <td style="padding: 10px;">${Number(row.max_age).toFixed(1)} - ${Number(row.min_age).toFixed(1)} Ma</td>
+	                        <td style="padding: 10px;">${row.count}</td>
+	                        <td style="padding: 10px; font-style: italic; color: #555; font-size: 0.9em; max-width: 300px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" title="${row.reference}">${row.reference}</td>
+	                    </tr>
+	                `).join('');
+
+	                if (pageInfo) pageInfo.innerText = `Page ${currentPage} of ${Math.ceil(filteredData.length / rowsPerPage)}`;
+	                if (prevBtn) prevBtn.disabled = currentPage === 1;
+	                if (nextBtn) nextBtn.disabled = currentPage >= Math.ceil(filteredData.length / rowsPerPage);
+	            }
+
+	            if (searchInput) {
+	                searchInput.addEventListener('input', (e) => {
+	                    const term = e.target.value.toLowerCase();
+	                    filteredData = explorerData.filter(row => row.genus.toLowerCase().includes(term));
+	                    currentPage = 1;
+	                    renderTable();
+	                });
+	            }
+
+	            if (prevBtn) {
+	                prevBtn.addEventListener('click', () => {
+	                    if (currentPage > 1) { currentPage--; renderTable(); }
+	                });
+	            }
+
+	            if (nextBtn) {
+	                nextBtn.addEventListener('click', () => {
+	                    if (currentPage < Math.ceil(filteredData.length / rowsPerPage)) { currentPage++; renderTable(); }
+	                });
+	            }
+
+	            renderTable(); // Initial render
+	        }
+
+	        async function ensureExplorerLoaded() {
+	            if (explorerInitialized) return;
+	            if (explorerInitPromise) return explorerInitPromise;
+
+	            explorerInitPromise = (async () => {
+	                const tableBody = document.getElementById('explorerBody');
+	                if (tableBody) {
+	                    tableBody.innerHTML = '<tr><td colspan="4" style="padding: 12px; color:#777;">Loading…</td></tr>';
+	                }
+
+	                try {
+	                    const payload = await fetch('explorer_data.json').then(r => r.json());
+	                    initExplorer(payload);
+	                } catch (e) {
+	                    explorerInitPromise = null;
+	                    explorerInitialized = false;
+	                    if (tableBody) {
+	                        tableBody.innerHTML = '<tr><td colspan="4" style="padding: 12px; color:#c0392b;">Failed to load explorer data.</td></tr>';
+	                    }
+	                }
+	            })();
+
+	            return explorerInitPromise;
+	        }
+	
+			        Promise.all([
+		            fetch('web_data.json').then(r => r.json()),
+		            fetch('map_points.json').then(r => r.json()),
+		            fetch('rates_data.json').then(r => r.json()),
+		            fetch('deep_time_data.json').then(r => r.json()),
+		            fetch('climate_data.json').then(r => r.json()),
+		            fetch('null_model_data.json').then(r => r.json()),
+		            fetch('taxonomy_data.json').then(r => r.json())
+			        ]).then(([webData, mapData, ratesData, deepTimeData, climateData, nullData, taxData]) => {
 		
 		            // 1. MODULARITY
 		            const fmt = (v, digits = 3) => (v === null || v === undefined || Number.isNaN(v)) ? 'NA' : Number(v).toFixed(digits);
 	
-	            if (webData.sota && webData.sota.time && webData.sota.time.length) {
-	                const t = webData.sota.time;
-	                const y = webData.sota.modularity || [];
-	                const ySmooth = webData.sota.modularity_smooth || [];
-	                const nOcc = webData.sota.n_occ_total || [];
-	                const nLoc = webData.sota.n_localities || [];
-	                const nGen = webData.sota.n_genera || [];
-	
-	                const markerSizes = t.map((_, i) => {
-	                    const n = Number(nOcc[i] || 0);
-	                    const s = 6 + Math.log10(n + 1) * 4;
-	                    return Math.max(6, Math.min(18, s));
-	                });
-	
-	                const hover = t.map((_, i) =>
-	                    `Time: ${t[i]} Ma<br>` +
-	                    `Modularity: ${fmt(y[i])}<br>` +
-	                    `Occurrences: ${nOcc[i] ?? 'NA'}<br>` +
-	                    `Localities: ${nLoc[i] ?? 'NA'}<br>` +
-	                    `Genera: ${nGen[i] ?? 'NA'}`
-	                );
+		            if (webData.sota && webData.sota.time && webData.sota.time.length) {
+		                const t = webData.sota.time;
+		                const y = webData.sota.modularity || [];
+		                const ySmooth = webData.sota.modularity_smooth || [];
+		                const nOcc = webData.sota.n_occ_total || [];
+		                const nLoc = webData.sota.n_localities || [];
+		                const nGen = webData.sota.n_genera || [];
+		                const binWidth = webData.sota.params?.time_bin_width_ma ?? 5;
+		                const halfBin = binWidth / 2;
+
+		                const markerSizes = t.map((_, i) => {
+		                    const n = Number(nOcc[i] || 0);
+		                    const s = 6 + Math.log10(n + 1) * 4;
+		                    return Math.max(6, Math.min(18, s));
+		                });
+
+		                const hover = t.map((_, i) =>
+		                    `Time bin: ${fmt(t[i] + halfBin, 1)}–${fmt(t[i] - halfBin, 1)} Ma<br>` +
+		                    `Modularity: ${fmt(y[i])}<br>` +
+		                    `Occurrences: ${nOcc[i] ?? 'NA'}<br>` +
+		                    `Localities: ${nLoc[i] ?? 'NA'}<br>` +
+		                    `Genera: ${nGen[i] ?? 'NA'}`
+		                );
 	
 	                Plotly.newPlot('modularityChart', [
 	                    {
@@ -517,14 +628,16 @@
 	                }, { displayModeBar: false });
 	            }
 	
-	            // Null Model Stats
-	            if (nullData && typeof nullData.p_value !== 'undefined') {
-	                document.getElementById('nullModelStats').innerHTML = `
-	                    <div class="stat-box"><div class="stat-value">${fmt(nullData.observed_modularity)}</div><div class="stat-label">Observed Modularity</div></div>
-	                    <div class="stat-box"><div class="stat-value" style="color: ${nullData.significant ? '#27ae60' : '#c0392b'}">p = ${fmt(nullData.p_value)}</div><div class="stat-label">Permutation p-value</div></div>
-	                    <div class="stat-box"><div class="stat-value">${fmt(nullData.time_bin, 0)} Ma</div><div class="stat-label">Test Bin</div></div>
-	                `;
-	            }
+		            // Null Model Stats
+		            if (nullData && typeof nullData.p_value !== 'undefined') {
+		                const pDigits = (nullData.p_value < 0.01) ? 4 : 3;
+		                document.getElementById('nullModelStats').innerHTML = `
+		                    <div class="stat-box"><div class="stat-value">${fmt(nullData.observed_modularity)}</div><div class="stat-label">Observed Modularity</div></div>
+		                    <div class="stat-box"><div class="stat-value" style="color: ${nullData.significant ? '#27ae60' : '#c0392b'}">p = ${fmt(nullData.p_value, pDigits)}</div><div class="stat-label">Permutation p-value (one-sided)</div></div>
+		                    <div class="stat-box"><div class="stat-value">${nullData.n_iterations_used ?? 'NA'}</div><div class="stat-label">Permutations</div></div>
+		                    <div class="stat-box"><div class="stat-value">${fmt(nullData.time_bin, 0)} Ma</div><div class="stat-label">Test Bin</div></div>
+		                `;
+		            }
 	
 	            Plotly.newPlot('nullHistogram', [
 	                { x: nullData.null_distribution, type: 'histogram', marker: { color: '#ecf0f1' }, name: 'Random Chance' },
@@ -539,28 +652,65 @@
 	            }, { displayModeBar: false });
 	
 	            // 2. ML PREDICTION
-	            if (webData.ml && webData.ml.importance && webData.ml.features) {
-	                Plotly.newPlot('mlChart', [{
-	                    x: webData.ml.importance,
-	                    y: webData.ml.features,
-	                    type: 'bar', orientation: 'h',
-	                    marker: { color: ['#bdc3c7', '#bdc3c7', '#e74c3c', '#bdc3c7'] }
-	                }], {
-	                    ...layout,
-	                    xaxis: { title: 'Relative Importance' },
-	                    yaxis: { autorange: 'reversed' },
+		            if (webData.ml && webData.ml.importance && webData.ml.features) {
+		                Plotly.newPlot('mlChart', [{
+		                    x: webData.ml.importance,
+		                    y: webData.ml.features,
+		                    type: 'bar', orientation: 'h',
+		                    marker: { color: '#e74c3c' }
+		                }], {
+		                    ...layout,
+		                    xaxis: { title: 'Relative Importance' },
+		                    yaxis: { autorange: 'reversed' },
 	                    margin: { t: 20, r: 30, b: 50, l: 120 }
-	                }, { displayModeBar: false });
-	
-	                const m = webData.ml.metrics || {};
-	                document.getElementById('mlStats').innerHTML = `
-	                    <div class="stat-box"><div class="stat-value">${fmt(m.roc_auc)}</div><div class="stat-label">Holdout ROC-AUC</div></div>
-	                    <div class="stat-box"><div class="stat-value">${fmt(m.accuracy)}</div><div class="stat-label">Holdout Accuracy</div></div>
-	                    <div class="stat-box"><div class="stat-value">${m.n_samples ?? 'NA'}</div><div class="stat-label">Genus-bin Samples</div></div>
-	                `;
-	            } else {
-	                document.getElementById('mlChart').innerHTML = '<p style="color:#777; padding: 10px;">Not enough data to train the model.</p>';
-	            }
+		                }, { displayModeBar: false });
+
+		                const m = webData.ml.metrics || {};
+		                document.getElementById('mlStats').innerHTML = `
+		                    <div class="stat-box"><div class="stat-value">${fmt(m.roc_auc)}</div><div class="stat-label">Holdout ROC-AUC</div></div>
+		                    <div class="stat-box"><div class="stat-value">${fmt(m.accuracy)}</div><div class="stat-label">Holdout Accuracy</div></div>
+		                    <div class="stat-box"><div class="stat-value">${m.n_test ?? m.n_samples ?? 'NA'}</div><div class="stat-label">Holdout Samples</div></div>
+		                    <div class="stat-box"><div class="stat-value">${m.n_genera_test ?? 'NA'}</div><div class="stat-label">Holdout Genera</div></div>
+		                `;
+
+		                const cm = m.confusion_matrix;
+		                if (cm && typeof cm.tn === 'number') {
+		                    document.getElementById('mlConfusion').innerHTML = `
+		                        <div class="explanation" style="border-left-color: #e74c3c; margin-top: 18px;">
+		                            <h2 style="margin-top: 0;">Holdout Confusion Matrix</h2>
+		                            <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+		                                <thead>
+		                                    <tr style="background:#f8f9fa; text-align:left; border-bottom:2px solid #eee;">
+		                                        <th style="padding:10px;"></th>
+		                                        <th style="padding:10px;">Pred: Survives</th>
+		                                        <th style="padding:10px;">Pred: Extinct</th>
+		                                    </tr>
+		                                </thead>
+		                                <tbody>
+		                                    <tr style="border-bottom:1px solid #eee;">
+		                                        <td style="padding:10px; font-weight:bold;">Actual: Survives</td>
+		                                        <td style="padding:10px;">${cm.tn}</td>
+		                                        <td style="padding:10px;">${cm.fp}</td>
+		                                    </tr>
+		                                    <tr style="border-bottom:1px solid #eee;">
+		                                        <td style="padding:10px; font-weight:bold;">Actual: Extinct</td>
+		                                        <td style="padding:10px;">${cm.fn}</td>
+		                                        <td style="padding:10px;">${cm.tp}</td>
+		                                    </tr>
+		                                </tbody>
+		                            </table>
+		                            <p style="margin-top: 10px; color: #777;">
+		                                Holdout split: ${m.holdout_split ?? 'unknown'} (${fmt((m.holdout_fraction ?? 0.3) * 100, 0)}%).
+		                            </p>
+		                        </div>
+		                    `;
+		                } else {
+		                    document.getElementById('mlConfusion').innerHTML = '';
+		                }
+		            } else {
+		                document.getElementById('mlChart').innerHTML = '<p style="color:#777; padding: 10px;">Not enough data to train the model.</p>';
+		                document.getElementById('mlConfusion').innerHTML = '';
+		            }
 	
 	            // 3. CLIMATE
 	            Plotly.newPlot('climateChart', [
@@ -785,76 +935,20 @@
                 <div class="stat-box"><div class="stat-value">${dStats.total_occurrences}</div><div class="stat-label">Fossils Found</div></div>
             `;
 
-            Plotly.newPlot('dinoChart', [{
-                x: taxData.dino_chart.time,
-                y: taxData.dino_chart.diversity,
-                type: 'scatter', mode: 'lines', fill: 'tozeroy',
-                line: { color: '#27ae60', width: 3 }
-            }], {
-                ...layout,
-                // title: 'Dinosaur Diversity Over Time',
-                xaxis: { title: 'Time (Ma)', autorange: 'reversed' },
-                yaxis: { title: 'Genera Count' },
-                margin: { t: 20, r: 30, b: 50, l: 60 }
-            }, { displayModeBar: false });
+	            Plotly.newPlot('dinoChart', [{
+	                x: taxData.dino_chart.time,
+	                y: taxData.dino_chart.diversity,
+	                type: 'scatter', mode: 'lines', fill: 'tozeroy',
+	                line: { color: '#27ae60', width: 3 }
+	            }], {
+	                ...layout,
+	                // title: 'Dinosaur Diversity Over Time',
+	                xaxis: { title: 'Time (Ma)', autorange: 'reversed' },
+	                yaxis: { title: 'Genera Count' },
+	                margin: { t: 20, r: 30, b: 50, l: 60 }
+	            }, { displayModeBar: false });
 
-            // 5. DATA EXPLORER LOGIC
-            const tableBody = document.getElementById('explorerBody');
-            const searchInput = document.getElementById('explorerSearch');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const pageInfo = document.getElementById('pageInfo');
-
-            // Convert summary arrays to object list
-            const explorerData = webData.map.genus.map((g, i) => ({
-                genus: g,
-                min_age: webData.map.min_age[i],
-                max_age: webData.map.max_age[i],
-                count: webData.map.count[i],
-                reference: webData.map.reference[i] || "Unknown"
-            }));
-
-            let currentPage = 1;
-            const rowsPerPage = 15;
-            let filteredData = explorerData;
-
-            function renderTable() {
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-                const pageData = filteredData.slice(start, end);
-
-                tableBody.innerHTML = pageData.map(row => `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 10px; font-weight: bold;">${row.genus}</td>
-                        <td style="padding: 10px;">${row.max_age.toFixed(1)} - ${row.min_age.toFixed(1)} Ma</td>
-                        <td style="padding: 10px;">${row.count}</td>
-                        <td style="padding: 10px; font-style: italic; color: #555; font-size: 0.9em; max-width: 300px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" title="${row.reference}">${row.reference}</td>
-                    </tr>
-                `).join('');
-
-                pageInfo.innerText = `Page ${currentPage} of ${Math.ceil(filteredData.length / rowsPerPage)}`;
-                prevBtn.disabled = currentPage === 1;
-                nextBtn.disabled = currentPage >= Math.ceil(filteredData.length / rowsPerPage);
-            }
-
-            searchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                filteredData = explorerData.filter(row => row.genus.toLowerCase().includes(term));
-                currentPage = 1;
-                renderTable();
-            });
-
-            prevBtn.addEventListener('click', () => {
-                if (currentPage > 1) { currentPage--; renderTable(); }
-            });
-
-            nextBtn.addEventListener('click', () => {
-                if (currentPage < Math.ceil(filteredData.length / rowsPerPage)) { currentPage++; renderTable(); }
-            });
-
-            renderTable(); // Initial render
-
-        });
+	        });
     </script>
 </body>
 

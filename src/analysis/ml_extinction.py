@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
+from src.analysis.cleaning import clean_taxon_series
 
 def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parquet", output_dir="data/analysis"):
     """
@@ -32,6 +33,7 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
         return
 
     # Filter valid data
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
     df = add_analysis_coordinates(df)
     df = df.dropna(subset=["analysis_lat", "analysis_lng"])
