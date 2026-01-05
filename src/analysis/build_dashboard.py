@@ -22,7 +22,11 @@ def build_dashboard_assets(
 ) -> None:
     Path(dashboard_dir).mkdir(parents=True, exist_ok=True)
 
-    export_dashboard_data(data_path=data_path, output_file=f"{dashboard_dir}/web_data.json")
+    export_dashboard_data(
+        data_path=data_path,
+        output_file=f"{dashboard_dir}/web_data.json",
+        explorer_output_file=f"{dashboard_dir}/explorer_data.json",
+    )
     export_map_points(data_path=data_path, output_file=f"{dashboard_dir}/map_points.json")
     calculate_rates(data_path=data_path, output_file=f"{dashboard_dir}/rates_data.json")
     calculate_climate_correlation(data_path=data_path, output_file=f"{dashboard_dir}/climate_data.json")

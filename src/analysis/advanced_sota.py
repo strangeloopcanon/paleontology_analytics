@@ -5,57 +5,60 @@ import os
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
 from src.analysis.provinciality import compute_locality_network_modularity
+from src.analysis.cleaning import clean_taxon_series
 
 def calculate_rates(data_path="data/processed/merged_occurrences.parquet", output_file="dashboard/rates_data.json"):
     """
     Calculate origination and extinction rates per time bin.
     
-    - Origination Rate = (New genera in bin) / (Total genera in bin)
-    - Extinction Rate = (Genera that disappear after bin) / (Total genera in bin)
+    - Origination Rate = (genera with first appearance in bin) / (total genera observed in bin)
+    - Extinction Rate = (genera present in bin that are absent in the next, younger bin) / (total genera observed in bin)
+
+    Notes:
+    - These are dataset-based proxies and can be influenced by sampling and binning choices.
+    - The youngest bin is right-censored (no younger bin to compare to), so extinction is reported as null there.
     """
     print("Calculating origination/extinction rates...")
     
     df = pd.read_parquet(data_path)
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
-    
+
     time_bins = sorted(df["time_bin"].unique(), reverse=True)  # Oldest first
-    
+
+    first_bin = df.groupby("genus")["time_bin"].max()
+
     results = []
-    prev_genera = set()
-    
     for i, current_bin in enumerate(time_bins):
         current_genera = set(df[df["time_bin"] == current_bin]["genus"].unique())
-        
+        total = int(len(current_genera))
+        if total == 0:
+            continue
+
+        originations = int((first_bin == current_bin).sum())
+        orig_rate = originations / total if total else None
+
         if i < len(time_bins) - 1:
             next_bin = time_bins[i + 1]
             next_genera = set(df[df["time_bin"] == next_bin]["genus"].unique())
+            extinctions = int(len(current_genera - next_genera))
+            ext_rate = extinctions / total if total else None
         else:
-            next_genera = set()
-        
-        total = len(current_genera)
-        if total == 0:
-            continue
-            
-        # Originations: genera in current bin that weren't in previous (older) bin
-        originations = len(current_genera - prev_genera)
-        
-        # Extinctions: genera in current bin that aren't in next (younger) bin
-        extinctions = len(current_genera - next_genera)
-        
-        orig_rate = originations / total
-        ext_rate = extinctions / total
-        
-        results.append({
-            "time": float(current_bin),
-            "origination_rate": orig_rate,
-            "extinction_rate": ext_rate,
-            "total_genera": total,
-            "originations": originations,
-            "extinctions": extinctions
-        })
-        
-        prev_genera = current_genera
+            # Youngest bin is right-censored in the dataset.
+            extinctions = None
+            ext_rate = None
+
+        results.append(
+            {
+                "time": float(current_bin),
+                "origination_rate": orig_rate,
+                "extinction_rate": ext_rate,
+                "total_genera": total,
+                "originations": originations,
+                "extinctions": extinctions,
+            }
+        )
     
     # Detect mass extinctions (extinction rate > 2 std above mean)
     ext_rates = [r["extinction_rate"] for r in results if r["extinction_rate"] is not None]
@@ -64,7 +67,7 @@ def calculate_rates(data_path="data/processed/merged_occurrences.parquet", outpu
     threshold = mean_ext + 2 * std_ext
     
     for r in results:
-        r["is_mass_extinction"] = bool(r["extinction_rate"] > threshold)
+        r["is_mass_extinction"] = bool(r["extinction_rate"] is not None and r["extinction_rate"] > threshold)
     
     with open(output_file, "w") as f:
         json.dump(results, f)
@@ -81,6 +84,7 @@ def calculate_climate_correlation(data_path="data/processed/merged_occurrences.p
     print("Calculating climate correlation...")
     
     df = pd.read_parquet(data_path)
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
     
@@ -150,13 +154,20 @@ def calculate_climate_correlation(data_path="data/processed/merged_occurrences.p
     return {"timeseries": results, "temperature_curve": high_res_temp, "correlation": correlation if not np.isnan(correlation) else 0.0}
 
 
-def calculate_null_model(data_path="data/processed/merged_occurrences.parquet", output_file="dashboard/null_model_data.json", n_iterations=100):
+def calculate_null_model(
+    data_path="data/processed/merged_occurrences.parquet",
+    output_file="dashboard/null_model_data.json",
+    n_iterations=100,
+    *,
+    random_seed: int = 42,
+):
     """
     Generate a null distribution for provinciality (network modularity) to test against random mixing.
     """
     print(f"Running null model test ({n_iterations} iterations)...")
     
     df = pd.read_parquet(data_path)
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
     df = add_analysis_coordinates(df)
     df = df.dropna(subset=["analysis_lat", "analysis_lng"])
@@ -176,12 +187,13 @@ def calculate_null_model(data_path="data/processed/merged_occurrences.parquet", 
     observed_res = compute_locality_network_modularity(edges_df, locality_col="locality", genus_col="genus", min_localities=10, min_genera=10)
     observed_modularity = observed_res.modularity
 
-    # Null distribution: shuffle genus labels across locality–genus edges (keeps locality degree + genus frequency)
+    # Null distribution: shuffle genus labels across locality–genus edges (keeps locality degree + genus frequency).
     null_modularities = []
+    rng = np.random.default_rng(random_seed)
 
     for _ in range(n_iterations):
         shuffled_edges_df = edges_df.copy()
-        shuffled_edges_df["genus"] = np.random.permutation(shuffled_edges_df["genus"].values)
+        shuffled_edges_df["genus"] = rng.permutation(shuffled_edges_df["genus"].values)
         null_res = compute_locality_network_modularity(
             shuffled_edges_df, locality_col="locality", genus_col="genus", min_localities=10, min_genera=10
         )
@@ -191,13 +203,20 @@ def calculate_null_model(data_path="data/processed/merged_occurrences.parquet", 
     # Calculate p-value
     if observed_modularity is None or len(null_modularities) == 0:
         p_value = 1.0
+        k_ge = 0
     else:
-        p_value = sum(1 for m in null_modularities if m >= observed_modularity) / len(null_modularities)
+        k_ge = sum(1 for m in null_modularities if m >= observed_modularity)
+        # One-sided permutation p-value with +1 correction so p is never exactly 0.
+        p_value = (k_ge + 1) / (len(null_modularities) + 1)
     
     output = {
         "observed_modularity": observed_modularity,
         "null_distribution": null_modularities,
         "p_value": p_value,
+        "p_value_k_ge_observed": int(k_ge),
+        "n_iterations_requested": int(n_iterations),
+        "n_iterations_used": int(len(null_modularities)),
+        "random_seed": int(random_seed),
         "time_bin": float(target_bin),
         "significant": bool(p_value < 0.05),
         "n_edges": int(len(edges_df)),

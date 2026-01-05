@@ -20,3 +20,6 @@ data/processed/
 
 # Logs
 *.log
+
+# Local thesis workspace (never commit/push)
+thesis/

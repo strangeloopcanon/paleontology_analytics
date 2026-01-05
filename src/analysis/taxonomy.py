@@ -3,6 +3,8 @@ import numpy as np
 import json
 import os
 
+from src.analysis.cleaning import clean_taxon_series, clean_taxonomy_label
+
 def generate_taxonomy_data(data_path="data/processed/merged_occurrences.parquet", output_dir="dashboard"):
     """
     Generate data for:
@@ -16,8 +18,12 @@ def generate_taxonomy_data(data_path="data/processed/merged_occurrences.parquet"
     for col in ["phylum", "class", "order", "family", "genus"]:
         if col not in df.columns:
             df[col] = "Unknown"
-    
-    df = df.fillna("Unknown")
+
+    df["genus"] = clean_taxon_series(df["genus"])
+    df["phylum"] = clean_taxonomy_label(df["phylum"])
+    df["class"] = clean_taxonomy_label(df["class"])
+    df["order"] = clean_taxonomy_label(df["order"])
+    df["family"] = clean_taxonomy_label(df["family"])
     
     # --- 1. Sunburst Data (Phylum -> Class -> Order) ---
     # We'll take the top 50 Orders by occurrence count to keep the chart readable
@@ -79,11 +85,16 @@ def generate_taxonomy_data(data_path="data/processed/merged_occurrences.parquet"
     # Ensure numeric age
     dinos["mid_ma"] = pd.to_numeric(dinos["mid_ma"], errors="coerce")
     dinos = dinos.dropna(subset=["mid_ma"])
+    dinos["genus"] = clean_taxon_series(dinos["genus"])
+    dinos = dinos.dropna(subset=["genus"])
     
     dino_stats = {
         "total_genera": int(dinos["genus"].nunique()),
         "total_occurrences": int(len(dinos)),
-        "time_range": f"{dinos['max_ma'].max():.0f} - {dinos['min_ma'].min():.0f} Ma",
+        "time_range": (
+            f"{pd.to_numeric(dinos['max_ma'], errors='coerce').max():.0f} - "
+            f"{pd.to_numeric(dinos['min_ma'], errors='coerce').min():.0f} Ma"
+        ),
         "top_genera": dinos["genus"].value_counts().head(10).to_dict()
     }
     
@@ -99,7 +110,9 @@ def generate_taxonomy_data(data_path="data/processed/merged_occurrences.parquet"
     # --- 3. Survivor Champions (Longest Living) ---
     # Calculate duration for ALL genera
     df["mid_ma"] = pd.to_numeric(df["mid_ma"], errors="coerce")
-    valid_df = df.dropna(subset=["mid_ma"])
+    valid_df = df.dropna(subset=["mid_ma"]).copy()
+    valid_df["genus"] = clean_taxon_series(valid_df["genus"])
+    valid_df = valid_df.dropna(subset=["genus"])
     
     genus_ranges = valid_df.groupby("genus")["mid_ma"].agg(["min", "max", "count"])
     genus_ranges["duration"] = genus_ranges["max"] - genus_ranges["min"]

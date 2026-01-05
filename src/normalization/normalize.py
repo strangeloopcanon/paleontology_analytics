@@ -129,7 +129,10 @@ def _finalize_dataframe(df, output_dir, filename):
 
     for col, dtype in OCCURRENCE_SCHEMA.items():
         if dtype == "string":
-            df[col] = df[col].astype(str)
+            # Use pandas' nullable string dtype so missing values remain missing
+            # (avoid turning NaN/None into literal "nan"/"None" strings).
+            s = df[col].astype("string").str.strip()
+            df[col] = s.mask(s == "", pd.NA)
         elif dtype == "float64":
             df[col] = pd.to_numeric(df[col], errors='coerce')
 

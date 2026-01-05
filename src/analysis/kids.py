@@ -4,6 +4,7 @@ import json
 import os
 
 from src.analysis.geo import add_analysis_coordinates
+from src.analysis.cleaning import clean_taxon_series
 
 def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", output_dir="dashboard"):
     """
@@ -12,6 +13,7 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
     print("Generating data-driven insights...")
     
     df = pd.read_parquet(data_path)
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
     df = add_analysis_coordinates(df)
     df["time_bin"] = (df["mid_ma"] / 5).round() * 5
@@ -58,13 +60,17 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
         })
     
     # 3. Geographic Spread Champions
-    df_geo = df.dropna(subset=["analysis_lat", "analysis_lng"])
+    df_geo = df.dropna(subset=["analysis_lat", "analysis_lng"]).copy()
     df_geo["lat_bin"] = (df_geo["analysis_lat"] / 10).round() * 10
     df_geo["lng_bin"] = (df_geo["analysis_lng"] / 10).round() * 10
     
-    genus_spread = df_geo.groupby("genus").apply(
-        lambda x: len(x.groupby(["lat_bin", "lng_bin"]))
-    ).sort_values(ascending=False)
+    genus_spread = (
+        df_geo.groupby(["genus", "lat_bin", "lng_bin"])
+        .size()
+        .groupby("genus")
+        .size()
+        .sort_values(ascending=False)
+    )
     
     geographic_champions = []
     for genus, loc_count in genus_spread.head(10).items():
@@ -103,7 +109,7 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
     total_genera = df["genus"].nunique()
     total_occurrences = len(df)
     oldest_occurrence = df["mid_ma"].max()
-    youngest_occurrence = df["mid_ma"].min()
+    youngest_occurrence = max(0.0, float(df["mid_ma"].min()))
     
     # Find the "explosion" periods - highest origination
     genus_first = df.groupby("genus")["mid_ma"].max()
@@ -120,7 +126,7 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
         "stats": {
             "total_genera": int(total_genera),
             "total_occurrences": int(total_occurrences),
-            "time_span": f"{oldest_occurrence:.0f} - {youngest_occurrence:.0f} Ma",
+            "time_span": f"{float(oldest_occurrence):.0f} - {float(youngest_occurrence):.0f} Ma",
             "peak_origination": {
                 "time_ma": float(peak_origination_time),
                 "new_genera": int(peak_origination_count)

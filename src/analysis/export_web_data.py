@@ -3,16 +3,22 @@ import numpy as np
 import json
 import os
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
 from src.analysis.provinciality import compute_locality_network_modularity
+from src.analysis.cleaning import clean_taxon_series
 
 # Import analysis logic or re-implement simplified versions for export
 # To ensure consistency, we'll re-implement the core logic here to output pure JSON structure.
 
-def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet", output_file="dashboard/web_data.json"):
+def export_dashboard_data(
+    data_path="data/processed/merged_occurrences.parquet",
+    output_file="dashboard/web_data.json",
+    *,
+    explorer_output_file: str | None = "dashboard/explorer_data.json",
+):
     print(f"Exporting dashboard data from {data_path}...")
     
     try:
@@ -22,6 +28,7 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
         return
 
     # Filter valid data (coordinates handled via analysis_lat/lng below)
+    df["genus"] = clean_taxon_series(df["genus"])
     df = df.dropna(subset=["mid_ma", "genus"])
     df["mid_ma"] = pd.to_numeric(df["mid_ma"], errors="coerce")
     df = df.dropna(subset=["mid_ma"])
@@ -192,9 +199,11 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
     if len(agg) > 200:
         X = agg[feature_cols].fillna(0)
         y = agg["extinct"]
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=42, stratify=y
-        )
+        groups = agg["genus"]
+        splitter = GroupShuffleSplit(n_splits=1, test_size=0.3, random_state=42)
+        train_idx, test_idx = next(splitter.split(X, y, groups=groups))
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
         clf = RandomForestClassifier(n_estimators=200, random_state=42, class_weight="balanced")
         clf.fit(X_train, y_train)
 
@@ -205,6 +214,12 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
         except Exception:
             roc_auc = 0.5
 
+        cm = confusion_matrix(y_test, y_pred, labels=[0, 1])
+        if cm.shape == (2, 2):
+            tn, fp, fn, tp = (int(cm[0, 0]), int(cm[0, 1]), int(cm[1, 0]), int(cm[1, 1]))
+        else:
+            tn = fp = fn = tp = 0
+
         ml_data = {
             "features": ["Geographic Range", "Abundance", "Latitudinal Range", "Age (bins)"],
             "importance": clf.feature_importances_.tolist(),
@@ -214,17 +229,27 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
                 "n_samples": int(len(agg)),
                 "extinction_rate": float(y.mean()),
                 "holdout_fraction": 0.3,
+                "holdout_split": "grouped_by_genus",
+                "n_train": int(len(train_idx)),
+                "n_test": int(len(test_idx)),
+                "n_genera_train": int(agg.loc[train_idx, "genus"].nunique()),
+                "n_genera_test": int(agg.loc[test_idx, "genus"].nunique()),
+                "confusion_matrix": {
+                    "tn": tn,
+                    "fp": fp,
+                    "fn": fn,
+                    "tp": tp,
+                },
             },
         }
 
     # --- Final JSON ---
-    final_data = {
+    summary_data = {
         "diversity": diversity_data,
         "sqs": {
             "time": [r["time"] for r in sqs_results],
             "count": [r["sqs"] for r in sqs_results]
         },
-        "map": explorer_data,
         "sota": {
             "time": sota_df["time"].astype(float).tolist() if len(sota_df) else [],
             "modularity": sota_df["modularity"].tolist() if len(sota_df) else [],
@@ -247,9 +272,15 @@ def export_dashboard_data(data_path="data/processed/merged_occurrences.parquet",
     }
     
     with open(output_file, "w") as f:
-        json.dump(final_data, f)
+        json.dump(summary_data, f)
+
+    if explorer_output_file is not None:
+        with open(explorer_output_file, "w") as f:
+            json.dump(explorer_data, f)
     
     print(f"Dashboard data saved to {output_file}")
+    if explorer_output_file is not None:
+        print(f"Explorer data saved to {explorer_output_file}")
 
 if __name__ == "__main__":
     export_dashboard_data()
