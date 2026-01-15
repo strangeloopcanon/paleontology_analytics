@@ -1,0 +1,23 @@
+{
+  "data_path": "data/processed/merged_occurrences.parquet",
+  "time_bin_width_myr": 5.0,
+  "locality_bin_degrees": 5.0,
+  "max_delta_myr_for_velocity": 10.0,
+  "min_occurrences_per_genus_bin": 1,
+  "outlier_velocity_quantile": 0.995,
+  "n_occurrence_rows_loaded": 1285859,
+  "n_occurrence_rows_after_clean": 1154460,
+  "n_occurrence_rows_after_dedup": 991602,
+  "n_occurrence_rows_after_coords": 991602,
+  "deduped_fraction_of_clean": 0.14106855153058573,
+  "youngest_time_bin_ma": 65.0,
+  "n_genus_bin_rows": 130158,
+  "n_velocity_rows": 67458,
+  "n_model_rows": 65030,
+  "terminal_rate_model_rows": 0.258403813624481,
+  "auc_group_split": 0.6933747596405433,
+  "auc_repeats_mean": 0.6932704434799237,
+  "auc_repeats_sd": 0.004257510356035068,
+  "auc_repeats_p2_5": 0.6842486546719375,
+  "auc_repeats_p97_5": 0.7000370471837348
+}

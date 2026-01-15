@@ -21,5 +21,41 @@ data/processed/
 # Logs
 *.log
 
-# Local thesis workspace (never commit/push)
-thesis/
+# Research workspace (`thesis/`)
+#
+# Track writeups + code + small curated artifacts.
+# Keep large/generated tables and caches out of git.
+
+# Local-only housekeeping
+thesis/_archive/
+thesis/_meta/
+
+# Upstream helper bundle (kept locally; not used by our pipeline)
+thesis/earth_system/climate_540myr/scripts/
+
+# Caches + per-run external downloads
+thesis/**/cache/
+thesis/**/external/
+thesis/**/_smoke_test/
+
+# Large data artifacts (regeneratable)
+thesis/**/*.parquet
+thesis/**/*.nc
+thesis/**/*.csv
+thesis/**/*.xls
+thesis/**/*.xlsx
+thesis/**/*.lines
+thesis/**/*.names
+
+# Large literature query exports (keep the markdown; treat JSON as cache)
+thesis/literature/reading_lists/**/*.json
+
+# Output JSON (keep writeups/figures; treat structured outputs as regeneratable)
+thesis/**/output*/**/*.json
+
+# PDFs: keep only explicitly whitelisted open-access PDFs
+thesis/**/*.pdf
+!thesis/literature/pdfs/10.1371_journal.pone.0051925.pdf
+
+# Allowlist: small derived forcing series
+!thesis/earth_system/climate_540myr/output/climate_540myr_timeseries.csv
