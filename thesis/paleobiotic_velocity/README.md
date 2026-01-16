@@ -9,7 +9,7 @@ This directory contains a *bias-aware* mobility + extinction analysis pipeline d
 
 ## Run
 
-From the repo root:
+From the repo root (requires `data/processed/merged_occurrences.parquet`; generated locally / gitignored):
 
 ```bash
 python thesis/paleobiotic_velocity/run_pipeline.py \
