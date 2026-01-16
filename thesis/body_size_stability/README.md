@@ -6,6 +6,8 @@ Goal: a first-pass test of a high-novelty idea:
 
 This analysis is intentionally exploratory and produces **stored artifacts** (CSV + figures + summary markdown) under `output/`.
 
+Start here: `thesis/body_size_stability/RESULTS.md`
+
 ## Data sources
 
 1) **Dinosaur body-mass estimates** from Benson et al. (2014, PLOS Biology) supplementary Dataset S1:
@@ -64,4 +66,3 @@ python thesis/body_size_stability/run_analysis.py \
 - The stability proxy is derived from PBDB occurrences and can still reflect sampling and database practice.
 - Dataset S1 is a compiled specimen dataset (not PBDB) and has its own sampling biases.
 - A strong correlation would be **suggestive**, not causal; next steps would require an independent tectonic/climate stability series and sampling-aware modeling.
-

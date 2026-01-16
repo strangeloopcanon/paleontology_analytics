@@ -1,4 +1,4 @@
-# Draft manuscript (local, gitignored): Geographic portfolio structure and mass‑extinction survivorship
+# Draft manuscript: Geographic portfolio structure and mass‑extinction survivorship
 
 ## Working title
 

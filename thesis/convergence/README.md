@@ -1,6 +1,6 @@
 # Convergence analyses (PBDB ecospace × paleogeography)
 
-This folder contains **stored, local-only** (gitignored) analyses aimed at testing three related, high-level convergence questions using:
+This folder contains analysis code + writeups aimed at testing three related, high-level convergence questions using:
 - PBDB occurrences from this repo: `data/processed/merged_occurrences.parquet`
 - PBDB **taxon ecospace** annotations (diet/motility/life habit/environment) fetched via PBDB API
 - (Optional) independent Earth-system time series (climate/paleogeography) downloaded into `thesis/earth_system/`
@@ -18,6 +18,10 @@ This folder contains **stored, local-only** (gitignored) analyses aimed at testi
 
 These are explored first with PBDB-derived turnover/provinciality/volatility metrics, and then (when available) with an **independent** climate/paleogeography forcing series.
 
+Start here:
+- `thesis/convergence/RESULTS.md`
+- `thesis/synthesis/FINAL_REPORT.md` (ties the robustness stack together)
+
 ## Run
 
 ```bash
@@ -33,11 +37,9 @@ python thesis/convergence/run_convergence_analysis.py \
 
 ## Outputs
 
-- `output_run/ecospace_genus_mapping.csv`: genus → ecospace traits (PBDB API).
-- `output_run/timebin_metrics.csv`: per-bin convergence + turnover/provinciality metrics.
-- `output_run/pairwise_sample.csv`: sampled per-bin region-pair similarities used for model fit.
-- `output_run/figures/*.png`: time series + scatter plots.
 - `output_run/summary.md`: short interpretation + caveats.
+- `output_run/*.csv`: per-bin metrics + sampled pairwise similarities (generated; not tracked).
+- `output_run/**/figures/*.png`: generated plots (not tracked).
 
 ## Canonical stored run
 
@@ -45,7 +47,7 @@ The current synthesis defaults point at the full‑PBDB run in:
 - `thesis/convergence/output_v3_fullpbdb/`
 
 Older exploratory runs are archived under:
-- `thesis/_archive/convergence/`
+- `thesis/_archive/convergence/` (local-only; not tracked).
 
 ## Notes / caveats
 

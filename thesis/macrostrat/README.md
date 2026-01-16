@@ -8,7 +8,7 @@ for deep-time PBDB analyses.
 - Macrostrat API v2 (CC-BY 4.0): `https://macrostrat.org/api/v2/`
 - We download gap-bound **sections/packages** from: `https://macrostrat.org/api/v2/sections?all&format=csv`
 
-## Files written (gitignored)
+## Files written (not tracked)
 
 - Raw download: `data/raw/external/macrostrat/sections_all.csv`
 - Derived 10 Myr binned time series: `data/processed/external/macrostrat/macrostrat_sections_timeseries_bin10.csv`
@@ -27,4 +27,3 @@ for deep-time PBDB analyses.
 
 - Macrostrat coverage is not globally uniform (North America-heavy); treat as a **sensitivity check**, not a definitive global rock-area series.
 - Macrostrat-derived proxies can be highly collinear with PBDB sampling proxies (collections/occurrences/localities); avoid over-interpreting coefficient changes under multicollinearity.
-

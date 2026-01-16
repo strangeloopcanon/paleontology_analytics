@@ -31,4 +31,4 @@ python -m src.cli normalize --source merge --output data/processed
 
 Notes:
 - The current PBDB interval setting (`Cambrian,Cretaceous`) truncates the record at ~66 Ma, so genera whose last appearance is at the youngest bin are treated as *right-censored* in the extinction analysis.
-- `data/raw/` and `data/processed/` are gitignored by default.
+- `data/raw/` and `data/processed/` are not tracked by default (large datasets).

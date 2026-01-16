@@ -9,7 +9,7 @@ time bins.
 PBDB actually provides **occurrence-level** ecospace fields via `occs/list` when `show=ecospace` is requested, and those are much
 more complete for vertebrates (e.g., Mammalia).
 
-## Datasets downloaded (raw; gitignored)
+## Datasets downloaded (raw; not tracked)
 
 - Mammalia occurrences with ecospace:
   - `data/raw/pbdb_occurrences_mammalia_ecospace_paged.csv`
@@ -63,4 +63,3 @@ pair-level model rather than bin-level residual averages.
 2) Try alternative spatial binning (larger grid cells) to increase per-bin locality counts in older terrestrial bins.
 3) Add an independent terrestrial sampling proxy (Macrostrat is NA-heavy; consider region-specific rock-area curves or focus on
    Cenozoic with better constraints).
-
