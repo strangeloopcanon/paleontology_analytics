@@ -8,11 +8,11 @@ This folder is a *working* synthesis layer that ties together:
 
 Key scripts/results:
 
+- Start here: `thesis/synthesis/FINAL_REPORT.md`
 - `thesis/synthesis/test_volatility_filter.py` → `thesis/synthesis/output_volatility_filter_v4/summary.md`
 - `thesis/convergence/RESULTS.md`
 - `thesis/body_size_stability/RESULTS.md`
 
 Notes:
-- Everything under `thesis/` is gitignored by design.
-- `data/raw/` is also gitignored; large external datasets can be stored there.
-
+- Under `thesis/`, we track writeups + code + a small set of curated figures.
+- Large datasets and per-run exports live under `data/` and `output*` folders and are not tracked by default.

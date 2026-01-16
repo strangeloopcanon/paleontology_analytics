@@ -2,6 +2,7 @@
 
 ## Contents
 
+- `writeups/`: draft writeups and research notes.
 - `pilot/`: the initial paleovelocity pilot migrated from the repo root (code + manuscript + outputs).
 - `literature/`: reproducible bibliography build + annotated review notes.
 - `paleobiotic_velocity/`: the rigorous pipeline (bias controls + survival models + robustness tests) and its outputs.
@@ -20,9 +21,16 @@
 
 ## Reproduce key results
 
-Run the “one button” pipeline (uses existing processed data; no large downloads):
+Prereq: you need the processed PBDB dataset locally (this repo does not track large datasets under `data/`).
+
+Once `data/processed/merged_occurrences.parquet` exists, run the “one button” pipeline:
 
 `python thesis/run_all.py`
+
+## Reading order
+
+- Best-supported result: `thesis/synthesis/FINAL_REPORT.md`
+- High-level overview: `thesis/writeups/research_summary.md`
 
 ## Highlights
 

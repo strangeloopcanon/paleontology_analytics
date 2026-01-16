@@ -7,10 +7,11 @@ Source paper:
 - Paper URL: `https://www.nature.com/articles/s41597-022-01490-4`
 - Figshare record (dataset): `https://doi.org/10.6084/m9.figshare.19920662.v1`
 
-Downloaded artifacts (gitignored):
+Downloaded artifacts (not tracked):
 - `data/raw/external/climate_540myr/High_Resolution_Climate_Simulation_Dataset_540_Myr.nc` (NetCDF; 55 snapshots: 540 Ma → 10 Ma + PI)
 - `data/raw/external/climate_540myr/scripts.zip` (author scripts + helper files)
 - Extracted upstream scripts (for reference only; not used by our pipeline): `thesis/earth_system/climate_540myr/scripts/`
+These are intentionally **not tracked** in git (large upstream artifacts).
 
 ## What we derive
 
@@ -35,4 +36,4 @@ python thesis/earth_system/climate_540myr/derive_timeseries.py \
 Outputs:
 - `output/climate_540myr_timeseries.csv`
 - `output/summary.md`
-- `output/figures/*.png`
+- `output/figures/*.png` (generated; not tracked)

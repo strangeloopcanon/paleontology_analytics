@@ -1,4 +1,4 @@
-# Draft manuscript (local, gitignored): climate volatility and marine functional convergence
+# Draft manuscript: climate volatility and marine functional convergence
 
 ## Title (working)
 
@@ -163,4 +163,3 @@ Run all key analyses:
 Key outputs to read:
 - `thesis/synthesis/FINAL_REPORT.md`
 - `thesis/synthesis/output_pair_level_model_volatility_v1/summary.md`
-

@@ -12,7 +12,7 @@ def _run(cmd: list[str]) -> None:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Reproduce key thesis outputs (marine volatility→convergence).")
+    p = argparse.ArgumentParser(description="Reproduce key research outputs (marine volatility→convergence).")
     p.add_argument("--python", default=sys.executable, help="Python interpreter to use for all steps.")
     p.add_argument(
         "--skip-pair-model",
@@ -64,4 +64,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

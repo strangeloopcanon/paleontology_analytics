@@ -2,7 +2,8 @@
 
 Hypothesis tested (high novelty, exploratory): **longer biogeographic stability is associated with a stronger “missing middle sizes” pattern** (i.e., more bimodal body-size distributions) in dinosaurs.
 
-This folder is intentionally **gitignored**; artifacts are stored under subfolders named `output*`.
+This folder tracks the writeups + analysis code. Large per-run artifacts (tables, caches, most plots) are generated into `output*`
+folders but are not tracked.
 
 ## Primary run (stored)
 

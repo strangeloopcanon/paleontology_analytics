@@ -11,6 +11,10 @@ venv/
 .vscode/
 .idea/
 
+# Secrets / local env
+.env
+.env.*
+
 # Data (Ignore raw and processed data, they are too big and can be regenerated)
 data/raw/
 data/processed/
@@ -52,6 +56,9 @@ thesis/literature/reading_lists/**/*.json
 
 # Output JSON (keep writeups/figures; treat structured outputs as regeneratable)
 thesis/**/output*/**/*.json
+
+# Output figures (generated; keep only curated figures outside `output*/`)
+thesis/**/output*/**/*.png
 
 # PDFs: keep only explicitly whitelisted open-access PDFs
 thesis/**/*.pdf
