@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "If you use this repository, please cite it."
 title: "Paleontology Analytics"
 type: software
+license: Apache-2.0
 authors:
   - family-names: "Krishnan"
     given-names: "Rohit"
