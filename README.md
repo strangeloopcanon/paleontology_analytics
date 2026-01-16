@@ -7,3 +7,6 @@ So what: this repo contains a small interactive dashboard plus a set of reproduc
 - Dashboard: `dashboard/` (static site; JSON artifacts are tracked)
 - Research writeups + figures: `thesis/README.md`
 
+## Citation
+
+If you use this repository, please cite it (see `CITATION.cff`).

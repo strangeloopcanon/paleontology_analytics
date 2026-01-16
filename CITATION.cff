@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it."
+title: "Paleontology Analytics"
+type: software
+authors:
+  - family-names: "Krishnan"
+    given-names: "Rohit"
+repository-code: "https://github.com/strangeloopcanon/paleontology_analytics"
+url: "https://github.com/strangeloopcanon/paleontology_analytics"
