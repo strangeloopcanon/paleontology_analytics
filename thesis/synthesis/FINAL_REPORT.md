@@ -3,6 +3,8 @@
 This is a “put a bow on it” snapshot of what we have, what we fixed, what can still break the claims, and what the next
 publication‑grade steps should be.
 
+Note on paths: most artifacts under `data/` and `output*/` are generated locally and gitignored (e.g., `*.csv`, `*.parquet`, `*.json`, `*.png`). The tracked “paper trail” is the `summary.md` files plus curated figures; see `thesis/run_all.py` to reproduce outputs.
+
 ## 1) Are we using the full PBDB?
 
 Yes (for Cambrian→Holocene, which matches the 540 Myr climate series we use).

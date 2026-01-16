@@ -3,12 +3,13 @@
 ## Contents
 
 - `writeups/`: draft writeups and research notes.
-- `pilot/`: the initial paleovelocity pilot migrated from the repo root (code + manuscript + outputs).
+- `archive/`: older/superseded material kept for context (e.g., the initial paleovelocity pilot).
 - `literature/`: reproducible bibliography build + annotated review notes.
 - `paleobiotic_velocity/`: the rigorous pipeline (bias controls + survival models + robustness tests) and its outputs.
 - `geographic_portfolio/`: event-based survivorship analysis testing range configuration (“connectedness/portfolio”) across mass extinctions + manuscript draft.
 - `convergence/`: marine functional convergence across provinces using PBDB ecospace roles.
 - `earth_system/`: independent CESM-derived forcing series (Li et al. 2022) + derived coherence/patchiness metrics.
+- `pbdb/`: PBDB download + local parquet build helpers (data under `data/` is gitignored).
 - `macrostrat/`: rock-record proxy ingestion and binned time series.
 - `synthesis/`: end-to-end robustness, pair-level model, interpretability, and publication-grade inference checks.
 - `manuscript_convergence_volatility/`: draft paper + supplement focused on volatility → marine functional convergence.

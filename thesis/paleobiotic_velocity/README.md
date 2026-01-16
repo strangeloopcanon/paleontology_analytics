@@ -1,6 +1,6 @@
 # Paleobiotic velocity (rigorous pipeline)
 
-This directory contains a *bias-aware* mobility + extinction analysis pipeline designed for a thesis-level standard:
+This directory contains a *bias-aware* mobility + extinction analysis pipeline designed to be research-grade:
 
 - multiple mobility estimators (occurrence-weighted vs locality-weighted centroids)
 - coordinate negative control (modern coords vs PBDB paleocoordinates)
@@ -18,4 +18,3 @@ python thesis/paleobiotic_velocity/run_pipeline.py \
 ```
 
 Outputs are written under `thesis/paleobiotic_velocity/output/` (figures, tables, model summaries).
-

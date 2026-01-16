@@ -64,13 +64,13 @@ To avoid leakage across repeated observations of the same genus, train/test spli
 
 Paleovelocity varies substantially across bins and taxa (Fig. 1). Across all capped transitions, median paleovelocity is 418.5 km/Myr (IQR 132.7–1,046.8). Median-by-bin paleovelocity shows weak linear correlation with the project’s approximate Phanerozoic temperature curve (*r*≈0.016).
 
-**Figure 1:** `paper/paleovelocity/figures/fig1_velocity_timeseries.png`
+**Figure 1:** `thesis/archive/paleovelocity_pilot/paleovelocity/figures/fig1_velocity_timeseries.png`
 
 ### 3.2 Paleovelocity and terminal extinction
 
 Terminal bins exhibit lower paleovelocity than non-terminal bins (median 270.4 vs 470.0 km/Myr; Fig. 2), consistent with mobility being associated with within-interval persistence.
 
-**Figure 2:** `paper/paleovelocity/figures/fig2_terminal_vs_nont_velocity.png`
+**Figure 2:** `thesis/archive/paleovelocity_pilot/paleovelocity/figures/fig2_terminal_vs_nont_velocity.png`
 
 In the genus-held-out logistic model, predictive performance is stable (AUC mean 0.693; 95% across-split range 0.684–0.700). Feature effect sizes (odds ratio per 1 SD; mean and 2.5–97.5% across splits) indicate consistent protective associations for:
 - paleovelocity: OR ≈ 0.86 (0.85–0.87)
@@ -79,13 +79,13 @@ In the genus-held-out logistic model, predictive performance is stable (AUC mean
 - latitudinal range: OR ≈ 0.79 (0.77–0.81)
 - geographic range: OR ≈ 0.88 (0.85–0.91)
 
-Coefficient summaries: `paper/paleovelocity/results/terminal_extinction_logit_coefficients_summary.csv`
+Coefficient summaries (generated on re-run): `thesis/archive/paleovelocity_pilot/output/results/terminal_extinction_logit_coefficients_summary.csv`
 
 ### 3.3 Fastest “movers”
 
 A non-inferential ranking of genera by median paleovelocity (minimum 3 transitions) is provided for qualitative follow-up:
 
-`paper/paleovelocity/tables/top_movers.csv`
+`thesis/archive/paleovelocity_pilot/output/tables/top_movers.csv`
 
 ## 4. Discussion
 
@@ -98,19 +98,18 @@ Key interpretations are intentionally cautious: centroid shifts reflect both rea
 Run:
 
 ```bash
-python -m src.analysis.paleovelocity --data data/processed/merged_occurrences.parquet --out paper/paleovelocity
+python thesis/archive/paleovelocity_pilot/code/paleovelocity.py --data data/processed/merged_occurrences.parquet --out thesis/archive/paleovelocity_pilot/output
 ```
 
 Primary outputs:
-- Figures: `paper/paleovelocity/figures/`
-- Tables: `paper/paleovelocity/tables/`
-- Results (model + time series): `paper/paleovelocity/results/`
+- Figures: `thesis/archive/paleovelocity_pilot/output/figures/`
+- Tables: `thesis/archive/paleovelocity_pilot/output/tables/`
+- Results (model + time series): `thesis/archive/paleovelocity_pilot/output/results/`
 
 ## 6. Limitations
 
-- **Interval truncation:** PBDB data were pulled for `Cambrian,Cretaceous`; genera persisting past 66 Ma are censored.
+- **Interval truncation:** this pilot was originally run on a Cambrian–Cretaceous-limited PBDB slice; re-run with an interval-complete local build to reduce boundary censoring.
 - **Sampling bias:** centroid shifts mix biological movement with changes in the geographic distribution of sampling.
 - **Taxonomic resolution:** genus-level aggregation masks species-level dynamics and lumping/splitting effects.
 - **Paleocoordinate uncertainty:** reconstructions depend on PBDB’s rotation model and underlying age/locational uncertainty.
 - **Environment labels:** PBDB environment strings are heterogeneous; “breadth” is a coarse proxy.
-
