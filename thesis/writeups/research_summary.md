@@ -4,9 +4,9 @@ This is a compact, model-friendly summary of what has been built and what we fou
 Large intermediate artifacts (raw tables, caches, per-run exports) are not tracked; the tracked outputs are primarily writeups, curated
 figures, and small derived series.
 
-## Data available in-repo
+## Data expected locally (gitignored)
 
-- PBDB occurrences (full 0–540 Ma span matching the climate series; includes Cenozoic slice that was missing initially):
+- PBDB occurrences (built locally; full 0–540 Ma span matching the climate series; includes Cenozoic slice that was missing initially):
   - Canonical: `data/processed/pbdb_occurrences.parquet`
   - Extended (keeps sampling-critical fields like `collection_no`): `data/processed/pbdb_occurrences_extended.parquet`
   - Merged analysis table: `data/processed/merged_occurrences.parquet`

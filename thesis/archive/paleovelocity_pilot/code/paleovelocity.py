@@ -128,7 +128,7 @@ class PaleovelocityOutputs:
 def run_paleovelocity_study(
     *,
     data_path: str = "data/processed/merged_occurrences.parquet",
-    output_dir: str = "paper/paleovelocity",
+    output_dir: str = "thesis/archive/paleovelocity_pilot/output",
     time_bin_width_myr: float = 5.0,
     locality_bin_degrees: float = 5.0,
     max_delta_myr_for_velocity: float = 10.0,
@@ -488,7 +488,7 @@ def run_paleovelocity_study(
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Run a genus paleo-velocity study and write paper-ready outputs.")
     p.add_argument("--data", default="data/processed/merged_occurrences.parquet", help="Input parquet file")
-    p.add_argument("--out", default="paper/paleovelocity", help="Output directory")
+    p.add_argument("--out", default="thesis/archive/paleovelocity_pilot/output", help="Output directory")
     p.add_argument("--bin-width", type=float, default=5.0, help="Time bin width (Myr)")
     p.add_argument("--locality-bin", type=float, default=5.0, help="Locality grid size (degrees)")
     p.add_argument("--max-delta", type=float, default=10.0, help="Max time gap (Myr) to compute velocity")

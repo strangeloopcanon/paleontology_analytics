@@ -4,7 +4,7 @@ This folder tests a biologically interpretable question that is *adjacent* to (b
 
 > Do genera with different **geographic portfolio structure** (connected core vs fragmented multi‑core distributions; narrow vs broad latitudinal spread) show different survivorship across major Phanerozoic crises, after controlling for range size and sampling intensity proxies?
 
-The workflow is designed to be reproducible from the repo’s normalized occurrence extract:
+The workflow is designed to be reproducible from the normalized occurrence extract (generated locally / gitignored):
 `data/processed/merged_occurrences.parquet`.
 
 ## What it does
