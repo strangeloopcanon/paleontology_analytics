@@ -38,7 +38,7 @@ def normalize_pbdb(input_dir="data/raw", output_dir="data/processed"):
     df = df.rename(columns=PBDB_MAPPING)
     df["source_db"] = "PBDB"
 
-    if "mid_ma" not in df.columns and "max_ma" in df.columns:
+    if "mid_ma" not in df.columns and "max_ma" in df.columns and "min_ma" in df.columns:
         # Ensure numeric
         df["max_ma"] = pd.to_numeric(df["max_ma"], errors='coerce')
         df["min_ma"] = pd.to_numeric(df["min_ma"], errors='coerce')
@@ -97,8 +97,8 @@ def normalize_neotoma(input_dir="data/raw", output_dir="data/processed"):
         try:
             df['lat'] = df['site'].apply(lambda x: x.get('geography', {}).get('coordinates', [None, None])[1] if isinstance(x, dict) else None)
             df['lng'] = df['site'].apply(lambda x: x.get('geography', {}).get('coordinates', [None, None])[0] if isinstance(x, dict) else None)
-        except:
-            pass
+        except Exception as e:
+            print(f"Unable to extract site coordinates: {e}")
 
     df = df.rename(columns=neotoma_mapping)
     df["source_db"] = "Neotoma"
@@ -151,8 +151,8 @@ def merge_datasets(input_dir="data/processed", output_dir="data/processed"):
         if "merged" not in f: # Avoid recursive reading
             try:
                 dfs.append(pd.read_parquet(f))
-            except:
-                pass
+            except Exception as e:
+                print(f"Skipping unreadable parquet {f}: {e}")
     
     if not dfs:
         print("No processed data found to merge.")

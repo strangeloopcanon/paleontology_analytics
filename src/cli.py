@@ -1,5 +1,4 @@
 import argparse
-import sys
 from src.acquisition.pbdb import fetch_pbdb_occurrences
 from src.acquisition.neotoma import fetch_neotoma_data
 from src.normalization.normalize import normalize_pbdb, normalize_neotoma, merge_datasets
@@ -50,7 +49,7 @@ def main():
         elif args.source == "neotoma":
             normalize_neotoma(input_dir=args.input, output_dir=args.output)
         elif args.source == "merge":
-            merge_datasets(input_dir=args.output, output_dir=args.output)
+            merge_datasets(input_dir=args.input, output_dir=args.output)
     elif args.command == "analyze":
         if args.type == "basic":
             plot_diversity_curve(data_path=args.input, output_dir=args.output)

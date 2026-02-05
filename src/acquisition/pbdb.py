@@ -1,10 +1,28 @@
 import requests
 import pandas as pd
 import os
-import time
 from datetime import datetime
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 PBDB_API_URL = "https://paleobiodb.org/data1.2/occs/list.csv"
+
+
+def _build_retry_session() -> requests.Session:
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=3,
+        status=3,
+        backoff_factor=0.5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=frozenset(["GET"]),
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 def fetch_pbdb_occurrences(
     interval="Cambrian,Cretaceous",
@@ -41,13 +59,14 @@ def fetch_pbdb_occurrences(
     }
 
     try:
-        response = requests.get(PBDB_API_URL, params=params, stream=True)
-        response.raise_for_status()
+        with _build_retry_session() as session:
+            response = session.get(PBDB_API_URL, params=params, stream=True, timeout=60)
+            response.raise_for_status()
 
-        # Save to CSV
-        with open(output_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+            # Save to CSV
+            with open(output_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
         
         print(f"Data saved to {output_path}")
         

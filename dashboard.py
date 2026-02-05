@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import subprocess
 import glob
+import sys
 from pathlib import Path
 
 st.set_page_config(
@@ -34,7 +35,7 @@ st.sidebar.divider()
 def run_analysis(analysis_type):
     with st.spinner(f"Running {analysis_type} analysis..."):
         result = subprocess.run(
-            ["python3", "-m", "src.cli", "analyze", "--type", analysis_type],
+            [sys.executable, "-m", "src.cli", "analyze", "--type", analysis_type],
             capture_output=True,
             text=True
         )

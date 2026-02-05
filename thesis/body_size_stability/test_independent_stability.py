@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,12 @@ from matplotlib import pyplot as plt
 
 def _ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
+
+
+def _stable_seed_offset(*parts: object, modulo: int = 10000) -> int:
+    payload = "|".join(str(p) for p in parts).encode("utf-8")
+    digest = hashlib.blake2b(payload, digest_size=8).digest()
+    return int.from_bytes(digest, "big") % int(modulo)
 
 
 def _perm_test_corr(x: np.ndarray, y: np.ndarray, *, permutations: int, seed: int) -> dict[str, float]:
@@ -93,7 +100,7 @@ def main() -> None:
                     sub[xcol].to_numpy(dtype=float),
                     sub[ycol].to_numpy(dtype=float),
                     permutations=int(args.permutations),
-                    seed=int(args.seed) + hash((exclude_avialae, mass_variant, ycol, xcol)) % 10000,
+                    seed=int(args.seed) + _stable_seed_offset(exclude_avialae, mass_variant, ycol, xcol),
                 )
                 row[f"corr_{xcol}_vs_{ycol}"] = r
         results.append(row)

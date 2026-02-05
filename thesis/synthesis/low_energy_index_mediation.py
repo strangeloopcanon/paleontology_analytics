@@ -351,7 +351,6 @@ def main() -> None:
     # Shift vol_z across bins (preserves vol autocorrelation), refit, compute |t|.
     bins_unique = np.unique(clusters)
     bins_unique = np.sort(bins_unique)[::-1]
-    bin_to_ix = {float(b): i for i, b in enumerate(bins_unique.tolist())}
     vol_by_bin = np.array([float(bin_controls.loc[bin_controls["time_bin"] == b, "vol_z"].iloc[0]) for b in bins_unique])
     idx_by_bin = np.array([float(bins_df.loc[bins_df["time_bin"] == b, "low_energy_index_z"].iloc[0]) for b in bins_unique])
 
@@ -365,7 +364,6 @@ def main() -> None:
         X = np.column_stack([np.ones(len(df)), taxsim, vol_new, taxsim * vol_new, idx_new, timez, pc1z, pc2z, provz])
         return _cluster_robust_se(X, y, clusters=clusters)
 
-    obs_fit = fit_with
     obs_t_vol = float(tab_with.loc[tab_with["term"] == "vol_z", "t_cluster"].iloc[0])
     obs_t_idx = float(tab_with.loc[tab_with["term"] == "low_energy_index_z", "t_cluster"].iloc[0])
 
@@ -446,4 +444,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

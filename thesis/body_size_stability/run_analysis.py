@@ -662,7 +662,7 @@ def main() -> None:
             f"- Body-mass specimens (all variants): `{out_dir / 'body_mass_specimens_all_variants.csv'}`",
             f"- Body-mass specimens (per variant): `{out_dir / 'body_mass_specimens_exclAvialae_0_mass1.csv'}` etc.",
             f"- PBDB stability bins: `{out_dir / 'pbdb_stability_timebins.csv'}`",
-            f"- Merged per-variant bins: " + ", ".join(f"`{p}`" for p in merged_paths),
+            "- Merged per-variant bins: " + ", ".join(f"`{p}`" for p in merged_paths),
             f"- Figures: `{fig_dir}`",
             "",
             "## Interpretation guardrails",

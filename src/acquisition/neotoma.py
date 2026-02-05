@@ -1,10 +1,27 @@
 import requests
-import pandas as pd
 import os
-import time
 from datetime import datetime
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
-NEOTOMA_API_URL = "http://api.neotomadb.org/v2.0/data/occurrences"
+NEOTOMA_API_URL = "https://api.neotomadb.org/v2.0/data/occurrences"
+
+
+def _build_retry_session() -> requests.Session:
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=3,
+        status=3,
+        backoff_factor=0.5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=frozenset(["GET"]),
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 def fetch_neotoma_data(
     limit=10000,
@@ -37,10 +54,11 @@ def fetch_neotoma_data(
 
     try:
         # Neotoma API returns JSON
-        response = requests.get(NEOTOMA_API_URL, params=params)
-        response.raise_for_status()
+        with _build_retry_session() as session:
+            response = session.get(NEOTOMA_API_URL, params=params, timeout=60)
+            response.raise_for_status()
         
-        data = response.json()
+            data = response.json()
         
         # The data is usually under 'data' key
         if 'data' in data:
@@ -49,9 +67,6 @@ def fetch_neotoma_data(
             print("Unexpected Neotoma API response structure.")
             return None
 
-        # Convert to DataFrame for easier handling/saving
-        df = pd.DataFrame(occurrences)
-        
         # Save as JSON (preserving structure) or CSV? 
         # JSON is safer for nested data, but we'll try to flatten later.
         # Let's save raw JSON for now.

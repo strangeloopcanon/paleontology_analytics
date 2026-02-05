@@ -1,7 +1,5 @@
 import pandas as pd
-import numpy as np
 import json
-import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
@@ -48,13 +46,15 @@ def export_dashboard_data(
     # --- 2. Data Explorer (Unique Genera List) ---
     # User requested deduplicated list. Unique genera count is ~48k, which fits in JSON.
     print("Generating unique genera summary...")
+    if "primary_reference" not in df.columns:
+        df["primary_reference"] = "Unknown"
     
     # Custom aggregation: get min/max/count age, plus a mode (most common) reference
     # Note: 'primary_reference' might contain NaN, so handle carefully
     def get_top_reference(series):
         try:
             return series.mode().iloc[0] if not series.mode().empty else "Unknown"
-        except:
+        except Exception:
             return "Unknown"
 
     genus_summary = df.groupby("genus").agg({
@@ -119,8 +119,8 @@ def export_dashboard_data(
             }
         )
 
-    sota_df = pd.DataFrame(sota_results).sort_values("time", ascending=False)
-    if len(sota_df) > 0:
+    if sota_results:
+        sota_df = pd.DataFrame(sota_results).sort_values("time", ascending=False)
         sota_df["modularity_smooth"] = (
             sota_df["modularity"].astype(float).rolling(smooth_window_bins, center=True, min_periods=1).mean()
         )
@@ -128,8 +128,19 @@ def export_dashboard_data(
             sota_df["mean_abs_lat"].astype(float).rolling(smooth_window_bins, center=True, min_periods=1).mean()
         )
     else:
-        sota_df["modularity_smooth"] = []
-        sota_df["mean_abs_lat_smooth"] = []
+        sota_df = pd.DataFrame(
+            columns=[
+                "time",
+                "modularity",
+                "modularity_smooth",
+                "mean_abs_lat",
+                "mean_abs_lat_smooth",
+                "n_occ_total",
+                "n_occ_sample",
+                "n_localities",
+                "n_genera",
+            ]
+        )
 
     # --- 3b. SQS Diversity ---
     # Simplified SQS calculation for export
@@ -138,7 +149,8 @@ def export_dashboard_data(
     for time_bin, group in df.groupby("time_bin"):
         counts = group["genus"].value_counts()
         total_occ = counts.sum()
-        if total_occ == 0: continue
+        if total_occ == 0:
+            continue
         
         freqs = counts / total_occ
         freqs = freqs.sort_values(ascending=False)
@@ -148,7 +160,8 @@ def export_dashboard_data(
         for f in freqs:
             cum_freq += f
             sqs_div += 1
-            if cum_freq >= quota: break
+            if cum_freq >= quota:
+                break
         
         sqs_results.append({"time": float(time_bin), "sqs": sqs_div})
     

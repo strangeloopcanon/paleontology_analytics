@@ -7,6 +7,13 @@ So what: this repo contains a small interactive dashboard plus a set of reproduc
 - Dashboard: `dashboard/` (static site; JSON artifacts are tracked)
 - Research writeups + figures: `thesis/README.md`
 
+## Development gates
+
+- `make check`: Ruff linting for `src/`, `thesis/`, and `tests/`
+- `make test`: pytest regression suite (`tests/`)
+- `make all`: `check` then `test`
+- `make deps-audit`: advisory `pip-audit` run (baseline mode)
+
 ## License
 
 Apache-2.0 (see `LICENSE`).

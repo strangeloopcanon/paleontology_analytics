@@ -13,7 +13,7 @@ import pyarrow.parquet as pq
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.normalization.schema import OCCURRENCE_SCHEMA, PBDB_MAPPING
+from src.normalization.schema import OCCURRENCE_SCHEMA, PBDB_MAPPING  # noqa: E402
 
 
 def _ensure_dir(path: Path) -> None:

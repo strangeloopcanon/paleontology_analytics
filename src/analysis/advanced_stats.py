@@ -2,7 +2,6 @@ import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import os
-import numpy as np
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
 from src.analysis.cleaning import clean_taxon_series

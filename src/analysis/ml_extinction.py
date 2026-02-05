@@ -1,9 +1,8 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import os
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
@@ -106,8 +105,12 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
     X = features_df[feature_cols].fillna(0)
     y = features_df["extinct_next_bin"]
     
-    # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+    # Train/test split by genus to avoid leakage across bins.
+    groups = features_df["genus"].astype(str)
+    splitter = GroupShuffleSplit(n_splits=1, test_size=0.3, random_state=42)
+    train_idx, test_idx = next(splitter.split(X, y, groups=groups))
+    X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+    y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
     
     # Train Random Forest
     print("Training Random Forest classifier...")
@@ -121,10 +124,10 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
     accuracy = accuracy_score(y_test, y_pred)
     try:
         roc_auc = roc_auc_score(y_test, y_pred_proba)
-    except:
+    except Exception:
         roc_auc = 0.5  # If only one class in test set
     
-    print(f"\n=== MODEL PERFORMANCE ===")
+    print("\n=== MODEL PERFORMANCE ===")
     print(f"Accuracy: {accuracy:.2%}")
     print(f"ROC-AUC: {roc_auc:.3f}")
     print(f"\nClassification Report:\n{classification_report(y_test, y_pred, target_names=['Survived', 'Extinct'])}")
@@ -143,7 +146,7 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
     plt.title("What Predicts Extinction? (Random Forest Feature Importances)")
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "extinction_feature_importances.png"))
-    print(f"\nFeature importances plot saved.")
+    print("\nFeature importances plot saved.")
     
     # Save summary
     summary_path = os.path.join(output_dir, "ml_extinction_summary.txt")
@@ -152,7 +155,8 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
         f.write(f"Dataset: {data_path}\n")
         f.write(f"Total genus-bin samples: {len(features_df)}\n")
         f.write(f"Extinction rate (per bin): {features_df['extinct_next_bin'].mean():.2%}\n\n")
-        f.write(f"Model: Random Forest (n_estimators=100, balanced)\n")
+        f.write("Model: Random Forest (n_estimators=100, balanced)\n")
+        f.write("Holdout split: grouped by genus (to prevent genus leakage)\n")
         f.write(f"Accuracy: {accuracy:.2%}\n")
         f.write(f"ROC-AUC: {roc_auc:.3f}\n\n")
         f.write("Feature Importances (descending):\n")

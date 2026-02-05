@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -276,11 +276,6 @@ def main() -> None:
     decomp = pd.read_csv(args.decomp)
     # Predictor/outcome variables.
     volatility_col = "delta_from_prev_T_field_meanabs"
-    v = decomp[volatility_col].to_numpy(dtype=float)
-    c = decomp["excess_role_js"].to_numpy(dtype=float)
-    t = decomp["time_bin"].to_numpy(dtype=float)
-    sampling = np.log1p(decomp["n_localities"].to_numpy(dtype=float))
-    controls = np.column_stack([t, sampling])
 
     # Build per-bin guild occupancy pivot tables.
     diet_occ = pd.read_csv(args.diet_occ)

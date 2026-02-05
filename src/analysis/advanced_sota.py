@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import json
-import os
 
 from src.analysis.geo import add_analysis_coordinates, add_binned_locality
 from src.analysis.provinciality import compute_locality_network_modularity
@@ -110,8 +109,10 @@ def calculate_climate_correlation(data_path="data/processed/merged_occurrences.p
     
     def get_temp(age):
         # Linear interpolation
-        if age <= sorted_times[0]: return temp_points[sorted_times[0]]
-        if age >= sorted_times[-1]: return temp_points[sorted_times[-1]]
+        if age <= sorted_times[0]:
+            return temp_points[sorted_times[0]]
+        if age >= sorted_times[-1]:
+            return temp_points[sorted_times[-1]]
         
         for i in range(len(sorted_times) - 1):
             t1, t2 = sorted_times[i], sorted_times[i+1]
@@ -227,7 +228,8 @@ def calculate_null_model(
     with open(output_file, "w") as f:
         json.dump(output, f)
     
-    print(f"Null model saved. Observed: {observed_modularity:.3f}, p={p_value:.3f}")
+    observed_text = f"{observed_modularity:.3f}" if observed_modularity is not None else "NA"
+    print(f"Null model saved. Observed: {observed_text}, p={p_value:.3f}")
     return output
 
 
