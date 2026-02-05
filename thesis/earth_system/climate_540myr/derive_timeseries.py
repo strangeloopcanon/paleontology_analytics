@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import math
 from pathlib import Path
 from typing import Any
 
@@ -191,6 +190,8 @@ def main() -> None:
         prev_land = None
         prev_coast = None
         prev_components = None
+        prev_T_global = None
+        prev_P_global = None
 
         for i in range(n_sim):
             time_ma = float(540 - 10 * i)
@@ -225,9 +226,14 @@ def main() -> None:
                 dCoast_abs = float("nan")
                 dComponents_abs = float("nan")
             else:
-                dT_signed = float(T_global - prev_T_global)  # type: ignore[name-defined]
-                dT_global_abs = float(abs(T_global - prev_T_global))  # type: ignore[name-defined]
-                dP_global_abs = float(abs(P_global - prev_P_global))  # type: ignore[name-defined]
+                if prev_T_global is None or prev_P_global is None:
+                    dT_signed = float("nan")
+                    dT_global_abs = float("nan")
+                    dP_global_abs = float("nan")
+                else:
+                    dT_signed = float(T_global - prev_T_global)
+                    dT_global_abs = float(abs(T_global - prev_T_global))
+                    dP_global_abs = float(abs(P_global - prev_P_global))
                 dT_field_meanabs = _weighted_mean_abs_diff(T_mean_field, prev_T_mean_field, w_lat)
 
                 # Spatial coherence of ΔT: "is the world changing together?"

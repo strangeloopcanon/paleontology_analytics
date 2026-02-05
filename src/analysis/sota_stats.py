@@ -64,7 +64,11 @@ def analyze_biogeographic_dynamics(data_path="data/processed/merged_occurrences.
             "mean_abs_lat": mean_abs_lat,
             "diversity": diversity
         })
-        
+
+    if not results:
+        print("Insufficient data for SOTA analysis after filtering (no bins met minimum occurrence threshold).")
+        return
+
     results_df = pd.DataFrame(results)
     results_df = results_df.sort_values("time_bin", ascending=False) # Oldest to Youngest? No, time_bin is Ma, so High to Low.
     

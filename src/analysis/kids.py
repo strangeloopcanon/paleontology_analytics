@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import json
 import os
 
@@ -139,65 +138,87 @@ def generate_kids_data(data_path="data/processed/merged_occurrences.parquet", ou
     # Filter to Mesozoic
     dino_df = df[(df["mid_ma"] <= 252) & (df["mid_ma"] >= 66)]
     dino_df = dino_df.dropna(subset=["analysis_lat", "analysis_lng"])
-    
+
     mesozoic_genera = dino_df["genus"].unique()
     mesozoic_count = len(mesozoic_genera)
-    
+
     # Real insights from the Mesozoic data
     mesozoic_genus_counts = dino_df["genus"].value_counts()
-    
+
     # Most common Mesozoic genera
     top_mesozoic = []
     for genus, count in mesozoic_genus_counts.head(15).items():
         genus_data = dino_df[dino_df["genus"] == genus]
         avg_age = genus_data["mid_ma"].mean()
-        top_mesozoic.append({
-            "genus": genus,
-            "occurrences": int(count),
-            "avg_age_ma": round(float(avg_age), 0)
-        })
-    
+        top_mesozoic.append(
+            {
+                "genus": genus,
+                "occurrences": int(count),
+                "avg_age_ma": round(float(avg_age), 0),
+            }
+        )
+
     # Geographic distribution
-    dino_by_region = dino_df.groupby(
-        [(dino_df["analysis_lat"] > 0).map({True: "Northern", False: "Southern"})]
-    )["genus"].nunique()
-    
+    dino_by_region = (
+        dino_df.groupby([(dino_df["analysis_lat"] > 0).map({True: "Northern", False: "Southern"})])["genus"]
+        .nunique()
+        .to_dict()
+    )
+
     # Time distribution
     triassic = dino_df[(dino_df["mid_ma"] <= 252) & (dino_df["mid_ma"] > 201)]
     jurassic = dino_df[(dino_df["mid_ma"] <= 201) & (dino_df["mid_ma"] > 145)]
     cretaceous = dino_df[(dino_df["mid_ma"] <= 145) & (dino_df["mid_ma"] >= 66)]
-    
+
     period_breakdown = {
         "Triassic": {"genera": int(triassic["genus"].nunique()), "occurrences": int(len(triassic))},
         "Jurassic": {"genera": int(jurassic["genus"].nunique()), "occurrences": int(len(jurassic))},
-        "Cretaceous": {"genera": int(cretaceous["genus"].nunique()), "occurrences": int(len(cretaceous))}
+        "Cretaceous": {"genera": int(cretaceous["genus"].nunique()), "occurrences": int(len(cretaceous))},
     }
-    
+
     # Data-driven dino facts
-    dino_facts = [
-        f"Our database has {mesozoic_count:,} different Mesozoic genera!",
-        f"The most common Mesozoic genus is {mesozoic_genus_counts.index[0]} with {mesozoic_genus_counts.iloc[0]:,} fossil occurrences.",
-        f"The Cretaceous period has {period_breakdown['Cretaceous']['genera']} genera - more than Triassic and Jurassic combined!",
-        f"{top_mesozoic[0]['genus']} fossils have been found {top_mesozoic[0]['occurrences']} times in our database.",
-        f"We have {total_occurrences:,} total fossil occurrences spanning {oldest_occurrence:.0f} million years.",
-    ]
-    
+    dino_facts = [f"Our database has {mesozoic_count:,} different Mesozoic genera!"]
+    if not mesozoic_genus_counts.empty:
+        dino_facts.extend(
+            [
+                f"The most common Mesozoic genus is {mesozoic_genus_counts.index[0]} with {mesozoic_genus_counts.iloc[0]:,} fossil occurrences.",
+                f"The Cretaceous period has {period_breakdown['Cretaceous']['genera']} genera - more than Triassic and Jurassic combined!",
+            ]
+        )
+    else:
+        dino_facts.append("We currently have no georeferenced Mesozoic occurrences in this slice of the data.")
+
+    if top_mesozoic:
+        dino_facts.append(
+            f"{top_mesozoic[0]['genus']} fossils have been found {top_mesozoic[0]['occurrences']} times in our database."
+        )
+    dino_facts.append(f"We have {total_occurrences:,} total fossil occurrences spanning {oldest_occurrence:.0f} million years.")
+
     # Add more specific facts
-    if len(geographic_champions) > 0:
-        dino_facts.append(f"The most widespread genus is {geographic_champions[0]['genus']}, found in {geographic_champions[0]['unique_regions']} different regions!")
-    
-    if len(survivor_champions) > 0:
-        dino_facts.append(f"The longest-surviving genus is {survivor_champions[0]['genus']}, lasting {survivor_champions[0]['duration_myr']:.0f} million years!")
-    
+    if geographic_champions:
+        dino_facts.append(
+            f"The most widespread genus is {geographic_champions[0]['genus']}, found in {geographic_champions[0]['unique_regions']} different regions!"
+        )
+
+    if survivor_champions:
+        dino_facts.append(
+            f"The longest-surviving genus is {survivor_champions[0]['genus']}, lasting {survivor_champions[0]['duration_myr']:.0f} million years!"
+        )
+
     # Dino Map Data
-    dino_map = {
-        "lat": dino_df["analysis_lat"].sample(min(2000, len(dino_df)), random_state=42).tolist(),
-        "lng": dino_df["analysis_lng"].sample(min(2000, len(dino_df)), random_state=42).tolist()
-    }
+    if len(dino_df) > 0:
+        dino_sample = dino_df.sample(min(2000, len(dino_df)), random_state=42)
+        dino_map = {
+            "lat": dino_sample["analysis_lat"].tolist(),
+            "lng": dino_sample["analysis_lng"].tolist(),
+        }
+    else:
+        dino_map = {"lat": [], "lng": []}
     
     dino_zone_data = {
         "top_genera": top_mesozoic,
         "period_breakdown": period_breakdown,
+        "region_breakdown": dino_by_region,
         "facts": dino_facts,
         "map": dino_map,
         "total_genera": mesozoic_count

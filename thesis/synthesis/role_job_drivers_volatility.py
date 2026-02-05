@@ -412,7 +412,7 @@ def main() -> None:
         "",
         f"- bins: {len(bins)} (from pair-level model)",
         f"- volatility quartiles (mean |ΔT| field): q25={q25:.3f}, q75={q75:.3f}",
-        f"- controls: time_z + sampling_pc1_z + sampling_pc2_z + provinciality_z",
+        "- controls: time_z + sampling_pc1_z + sampling_pc2_z + provinciality_z",
         "",
         "## Diet (coarse): geographic ubiquity (occupancy fraction)",
         "### Increases with volatility",

@@ -72,7 +72,8 @@ def compute_locality_network_modularity(
 
         communities = greedy_modularity_communities(locality_graph, weight="weight")
         modularity = nx.community.modularity(locality_graph, communities, weight="weight")
-    except Exception:
+    except Exception as e:
+        print(f"Warning: locality network modularity failed: {e}")
         modularity = None
 
     return ProvincialityResult(
@@ -82,4 +83,3 @@ def compute_locality_network_modularity(
         n_localities=int(len(localities)),
         n_genera=int(len(genera)),
     )
-

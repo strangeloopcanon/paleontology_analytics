@@ -25,6 +25,9 @@ data/processed/
 # Logs
 *.log
 
+# Local agent learnings
+.codex/
+
 # Research workspace (`thesis/`)
 #
 # Track writeups + code + small curated artifacts.

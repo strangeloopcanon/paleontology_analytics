@@ -307,7 +307,6 @@ def fit_hazard_model(
     random_state: int,
 ) -> dict:
     X_num = data[feature_cols].astype(float)
-    X_time = data[[time_col]].astype(str)
     y = data["event_extinct_next_bin"].astype(int)
     groups = data[group_col]
 

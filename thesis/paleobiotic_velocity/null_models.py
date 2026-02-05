@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -205,7 +204,6 @@ def main() -> None:
     hazard_obs = hazard_obs.dropna(subset=features + ["time_bin", "genus", "event_extinct_next_bin"]).copy()
     observed = _fit_velocity_model(hazard_obs, feature_cols=features, repeats=int(args.splits), seed=int(args.seed))
 
-    rng = np.random.default_rng(int(args.seed))
     perm_summaries = []
     perm_rows = []
     for p_i in range(int(args.n_permutations)):
@@ -241,4 +239,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
