@@ -23,7 +23,7 @@ def _z(x: np.ndarray) -> np.ndarray:
     if int(np.sum(mask)) < 3:
         return out
     mu = float(np.mean(x[mask]))
-    sd = float(np.std(x[mask], ddof=0))
+    sd = float(np.std(x[mask], ddof=1))
     sd = sd if sd > 0 else 1.0
     out[mask] = (x[mask] - mu) / sd
     return out
