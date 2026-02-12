@@ -236,7 +236,13 @@ def figure_4_robustness(bins: pd.DataFrame) -> None:
     ax = axes[0]
     colors = [_era_color(tb) for tb in loo["dropped_bin"]]
     ax.bar(loo["dropped_bin"], loo["partial_corr"], width=7, color=colors, alpha=0.8)
-    ax.axhline(0.380, color="red", linewidth=1.2, linestyle="--", label="Full sample r = 0.38")
+    # Read full-sample r from the robustness battery results.
+    robustness_json = Path("thesis/synthesis/output_robustness_battery/analysis_results.json")
+    full_r = 0.380
+    if robustness_json.exists():
+        rdata = json.loads(robustness_json.read_text())
+        full_r = rdata.get("primary_specification", {}).get("corr", 0.380)
+    ax.axhline(full_r, color="red", linewidth=1.2, linestyle="--", label=f"Full sample r = {full_r:.2f}")
     ax.axhline(0, color="black", linewidth=0.6)
     ax.set_xlabel("Dropped bin (Ma)")
     ax.set_ylabel("Partial correlation")
@@ -244,12 +250,29 @@ def figure_4_robustness(bins: pd.DataFrame) -> None:
     ax.invert_xaxis()
     ax.legend(fontsize=8)
 
-    # Summary of inference methods.
+    # Summary of inference methods — read from analysis output.
     ax = axes[1]
-    methods = ["Circular\nshift", "Block\nboot\n(b=2)", "Block\nboot\n(b=3)", "Block\nboot\n(b=5)",
-               "OLS +\nHAC", "SARIMAX\nAR(0)"]
-    pvals = [0.050, 0.020, 0.021, 0.029, 0.037, 0.079]
-    betas = [0.380, None, None, None, 0.013, 0.012]  # corr or beta as appropriate
+    robustness_json_path = Path("thesis/synthesis/output_robustness_battery/analysis_results.json")
+    if robustness_json_path.exists():
+        rj = json.loads(robustness_json_path.read_text())
+        prim = rj.get("primary_specification", {})
+        bb = rj.get("block_bootstrap", {})
+        hac = rj.get("ols_hac_auto", {})
+        sar = rj.get("sarimax_ar_sweep", {}).get("models", {}).get("AR(0)", {})
+        methods = ["Circular\nshift\n(exact)", "Block\nboot\n(b=2)", "Block\nboot\n(b=3)", "Block\nboot\n(b=5)",
+                   "OLS +\nHAC", "SARIMAX\nAR(0)"]
+        pvals = [
+            prim.get("p_exact", float("nan")),
+            bb.get("block_size_2", {}).get("p_boot", float("nan")),
+            bb.get("block_size_3", {}).get("p_boot", float("nan")),
+            bb.get("block_size_5", {}).get("p_boot", float("nan")),
+            hac.get("vol_p_hac", float("nan")),
+            sar.get("vol_p", float("nan")),
+        ]
+    else:
+        methods = ["Circular\nshift", "Block\nboot\n(b=2)", "Block\nboot\n(b=3)", "Block\nboot\n(b=5)",
+                   "OLS +\nHAC", "SARIMAX\nAR(0)"]
+        pvals = [float("nan")] * 6
     colors_bar = ["#1f77b4"] * 6
     bars = ax.bar(range(len(methods)), pvals, color=colors_bar, alpha=0.8, edgecolor="black", linewidth=0.5)
     ax.axhline(0.05, color="red", linewidth=1, linestyle="--", label="p = 0.05")

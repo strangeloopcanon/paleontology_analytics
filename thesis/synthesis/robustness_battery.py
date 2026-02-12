@@ -69,23 +69,42 @@ def _partial_corr(v: np.ndarray, y: np.ndarray, controls: np.ndarray) -> float:
 
 
 def _circular_shift_p(
-    v: np.ndarray, y: np.ndarray, controls: np.ndarray
+    v: np.ndarray, y: np.ndarray, controls: np.ndarray, *, seed: int = 77
 ) -> dict[str, float]:
-    """Exact circular-shift p-value (all N shifts)."""
+    """Circular-shift p-values: exact enumeration + random-sampling estimate.
+
+    Exact: counts all N shifts (including identity) where |corr| >= |obs|.
+    Random-sampling: 20,000 draws from non-zero shifts, p = (more+1)/(perms+1).
+    The two estimators differ for small N; exact is more conservative.
+    """
     rv = _residualize(v, controls)
     ry = _residualize(y, controls)
     mask = np.isfinite(rv) & np.isfinite(ry)
     rv, ry = rv[mask], ry[mask]
     n = len(rv)
     if n < 6:
-        return {"corr": float("nan"), "p_exact": float("nan"), "n": n, "n_shifts": 0}
+        return {"corr": float("nan"), "p_exact": float("nan"), "p_rand": float("nan"), "n": n, "n_shifts": 0}
     obs = float(np.corrcoef(rv, ry)[0, 1])
-    more = 0
+    # Exact enumeration (all N shifts including identity).
+    more_exact = 0
     for s in range(n):
         c = float(np.corrcoef(rv, np.roll(ry, s))[0, 1])
         if abs(c) >= abs(obs):
-            more += 1
-    return {"corr": obs, "p_exact": more / n, "n": n, "n_shifts": n}
+            more_exact += 1
+    # Random-sampling estimate (non-zero shifts only, +1 correction).
+    n_perm = 20000
+    rng = np.random.default_rng(seed)
+    shifts = rng.integers(1, n, size=n_perm)
+    more_rand = sum(
+        1 for s in shifts if abs(float(np.corrcoef(rv, np.roll(ry, s))[0, 1])) >= abs(obs)
+    )
+    return {
+        "corr": obs,
+        "p_exact": more_exact / n,
+        "p_rand": (more_rand + 1) / (n_perm + 1),
+        "n": n,
+        "n_shifts": n,
+    }
 
 
 def _pca_scores(X: np.ndarray, *, k: int) -> np.ndarray:
@@ -332,7 +351,47 @@ def main() -> None:
         }
 
     # -------------------------------------------------------
-    # 6) Effective sample size note
+    # 6) Ecospace coverage sensitivity
+    # -------------------------------------------------------
+    try:
+        cov_df = pd.read_csv("thesis/synthesis/output_ecospace_missingness/ecospace_coverage_per_bin.csv")
+        cov_merged = bins.merge(cov_df[["time_bin", "frac_marine_with_role"]], on="time_bin", how="left")
+        cov_col = cov_merged["frac_marine_with_role"].to_numpy(dtype=float)
+        if np.sum(np.isfinite(cov_col)) >= 10:
+            controls_with_cov = np.column_stack([controls, cov_col])
+            cov_shift = _circular_shift_p(v, y, controls_with_cov, seed=args.seed)
+
+            # Block bootstrap with coverage control.
+            rv_cov = _residualize(v, controls_with_cov)
+            ry_cov = _residualize(y, controls_with_cov)
+            mask_cov = np.isfinite(rv_cov) & np.isfinite(ry_cov)
+            rv_cc, ry_cc = rv_cov[mask_cov], ry_cov[mask_cov]
+            n_cc = len(rv_cc)
+            obs_cov = float(np.corrcoef(rv_cc, ry_cc)[0, 1]) if n_cc >= 6 else float("nan")
+            rng_cov = np.random.default_rng(args.seed + 1)
+            more_cov = 0
+            bs = 3
+            for _ in range(10000):
+                n_blocks = max(1, (n_cc + bs - 1) // bs)
+                starts = rng_cov.integers(0, n_cc, size=n_blocks)
+                idx = np.concatenate([np.arange(s, s + bs) % n_cc for s in starts])[:n_cc]
+                c = float(np.corrcoef(rv_cc, ry_cc[idx])[0, 1])
+                if abs(c) >= abs(obs_cov):
+                    more_cov += 1
+            p_boot_cov = (more_cov + 1) / 10001
+
+            results["coverage_control_sensitivity"] = {
+                "controls": "time + sampling_PCA_PC12 + provinciality + frac_marine_with_role",
+                **cov_shift,
+                "block_bootstrap_b3_p": p_boot_cov,
+            }
+        else:
+            results["coverage_control_sensitivity"] = {"error": "insufficient coverage data"}
+    except FileNotFoundError:
+        results["coverage_control_sensitivity"] = {"error": "ecospace missingness output not found; run ecospace_missingness_diagnostic.py first"}
+
+    # -------------------------------------------------------
+    # 7) Effective sample size note
     # -------------------------------------------------------
     results["effective_sample_sizes"] = {
         "n_bins_for_bin_level_predictors": len(bins),
@@ -356,7 +415,8 @@ def main() -> None:
         "## Primary specification (locked)",
         f"- Controls: {prim.get('controls', 'N/A')}",
         f"- Partial correlation: {prim.get('corr', 'nan'):.3f}",
-        f"- Exact circular-shift p: {prim.get('p_exact', 'nan'):.4f}",
+        f"- Exact circular-shift p (all N shifts): {prim.get('p_exact', 'nan'):.4f}",
+        f"- Random-sampling circular-shift p (20k draws): {prim.get('p_rand', 'nan'):.4f}",
         f"- Resolution limit: {prim.get('resolution_limit', 'N/A')}",
         "",
         "## Leave-one-out stability",
@@ -388,6 +448,19 @@ def main() -> None:
                 f"vol_beta={ar_val['vol_beta']:.4f}, vol_p={ar_val['vol_p']:.3g}"
             )
     lines.append(f"- Best by AIC: {results.get('sarimax_ar_sweep', {}).get('best_by_aic', 'N/A')}")
+
+    cov_sens = results.get("coverage_control_sensitivity", {})
+    lines.extend([
+        "",
+        "## Ecospace coverage control",
+        f"- Controls: {cov_sens.get('controls', 'N/A')}",
+        f"- Partial correlation: {cov_sens.get('corr', 'nan')}",
+        f"- Exact circular-shift p: {cov_sens.get('p_exact', 'nan')}",
+        f"- Random-sampling p: {cov_sens.get('p_rand', 'nan')}",
+        f"- Block bootstrap (b=3) p: {cov_sens.get('block_bootstrap_b3_p', 'nan')}",
+    ])
+    if "error" in cov_sens:
+        lines.append(f"- Error: {cov_sens['error']}")
 
     nw = results.get("ols_hac_auto", {})
     lines.extend([
