@@ -143,6 +143,28 @@ def main() -> None:
             x = merged[col].to_numpy(dtype=float)
             results[f"corr_{col}_vs_time"] = _corr_and_perm(x, t, seed=43)
 
+        # CRITICAL: partial correlation of coverage vs convergence, controlling for time.
+        # If this is weak, the raw r=0.90 is driven by the shared time trend and is not
+        # an independent confound. If strong, coverage may confound the volatility result.
+        def _partial_corr(x: np.ndarray, y_: np.ndarray, z: np.ndarray) -> float:
+            """Partial correlation of x and y controlling for z (via residualisation)."""
+            mask = np.isfinite(x) & np.isfinite(y_) & np.isfinite(z)
+            if int(np.sum(mask)) < 6:
+                return float("nan")
+            A = np.column_stack([np.ones(int(np.sum(mask))), z[mask]])
+            bx, *_ = np.linalg.lstsq(A, x[mask], rcond=None)
+            by, *_ = np.linalg.lstsq(A, y_[mask], rcond=None)
+            rx, ry_ = x[mask] - A.dot(bx), y_[mask] - A.dot(by)
+            return float(np.corrcoef(rx, ry_)[0, 1])
+
+        for col in ["frac_has_role", "frac_marine_with_role", "frac_in_ecospace"]:
+            x = merged[col].to_numpy(dtype=float)
+            r_partial = _partial_corr(x, y, t)
+            results[f"partial_corr_{col}_vs_convergence_controlling_time"] = {
+                "partial_r": r_partial,
+                "n": int(np.sum(np.isfinite(x) & np.isfinite(y) & np.isfinite(t))),
+            }
+
     (out_dir / "analysis_results.json").write_text(json.dumps(results, indent=2, default=str) + "\n")
 
     # Figures.
@@ -206,19 +228,30 @@ def main() -> None:
         "",
     ]
     for key, val in results.items():
-        if isinstance(val, dict):
-            lines.append(f"- {key}: corr={val.get('corr', 'nan'):.3f}, p={val.get('p_perm', 'nan'):.3g}, n={val.get('n', 0)}")
+        if key.startswith("partial_corr_"):
+            continue  # reported in its own section below
+        if isinstance(val, dict) and "corr" in val:
+            lines.append(f"- {key}: corr={val['corr']:.3f}, p={val.get('p_perm', 'nan'):.3g}, n={val.get('n', 0)}")
+        elif isinstance(val, dict):
+            lines.append(f"- {key}: {val}")
         else:
             lines.append(f"- {key}: {val}")
+
+    lines.append("")
+    lines.append("## Partial correlations (controlling for time)")
+    lines.append("")
+    for key, val in results.items():
+        if key.startswith("partial_corr_") and isinstance(val, dict):
+            lines.append(f"- {key}: partial_r={val.get('partial_r', 'nan'):.3f}, n={val.get('n', 0)}")
 
     lines.extend(
         [
             "",
             "## Interpretation",
             "",
-            "If `frac_marine_with_role` correlates strongly with `functional_excess_similarity_js`,",
-            "then annotation completeness may confound the convergence metric. If the correlation is",
-            "weak or non-significant, the signal is unlikely to be driven by trait missingness alone.",
+            "If the **partial** correlation of coverage vs convergence (controlling for time) is weak,",
+            "then the raw r=0.90 is driven by the shared secular trend and coverage is not an independent",
+            "confound. If the partial correlation is still strong, coverage may confound the volatility result.",
             "",
             "## Files",
             "",

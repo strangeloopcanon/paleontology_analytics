@@ -1,209 +1,127 @@
-# Final wrap (current state): volatility ↔ convergence, and dinosaur size-structure
+# Synthesis report: climate volatility and marine functional convergence
 
-This is a “put a bow on it” snapshot of what we have, what we fixed, what can still break the claims, and what the next
-publication‑grade steps should be.
+Current state of the marine volatility→convergence analysis, including all robustness checks and sensitivity tests.
 
-Note on paths: most artifacts under `data/` and `output*/` are generated locally and gitignored (e.g., `*.csv`, `*.parquet`, `*.json`, `*.png`). The tracked “paper trail” is the `summary.md` files plus curated figures; see `thesis/run_all.py` to reproduce outputs.
+## The claim
 
-## 1) Are we using the full PBDB?
+When Phanerozoic climate volatility is higher, geographically distant marine provinces become more functionally similar than expected from shared taxonomy. We call this "functional excess similarity" — the residual of Jensen-Shannon functional similarity regressed on Jaccard taxonomic similarity across locality pairs. The pattern is consistent with environmental filtering: volatile climates compress ecosystems toward a narrower range of ecological roles, producing convergent community structure even among taxonomically distinct faunas.
 
-Yes (for Cambrian→Holocene, which matches the 540 Myr climate series we use).
+## Data
 
-What was missing before:
-- The project’s PBDB acquisition default is **Cambrian → Cretaceous** (`src/acquisition/pbdb.py`), so the repo’s processed tables
-  originally had **no Cenozoic**.
-- Also, the repo’s canonical normalization schema drops PBDB fields that are critical for sampling controls (e.g., `collection_no`),
-  even though the raw CSV has them.
+- **Fossil occurrences:** Paleobiology Database (PBDB), Cambrian–Holocene, full download (1.97M occurrences). Ecospace annotations (diet, motility, life habit) from PBDB's `ecospace` fields.
+- **Climate forcing:** CESM paleoclimate simulations (Li et al. 2022), 10 Myr snapshots spanning 540 Ma. Primary predictor: `delta_from_prev_T_field_meanabs` (spatially-averaged absolute temperature change between consecutive snapshots).
+- **Sampling controls:** PBDB collection/occurrence counts (marine-classified) and Macrostrat rock-record proxies (section counts, column areas), compressed via PCA to avoid collinearity.
 
-What we did (now complete):
-- Downloaded the Cenozoic slice **reliably** using a paged downloader (avoids truncated `limit=all` streams):
-  - Script: `thesis/pbdb/download_pbdb_occurrences_paged.py`
-  - Raw output: `data/raw/pbdb_occurrences_paleogene_holocene_paged.csv` (873,054 occurrences; `mid_ma` ≈ 0–65.7 Ma)
-- Rebuilt the canonical and extended PBDB parquets:
-  - Canonical: `data/processed/pbdb_occurrences.parquet` (1,973,558 PBDB occurrences; `mid_ma` ≈ 0–534.8 Ma)
-  - Extended (retains `collection_no` etc): `data/processed/pbdb_occurrences_extended.parquet`
-  - Merged: `data/processed/merged_occurrences.parquet`
+## Primary result
 
-Note:
-- This is still not “literally everything PBDB ever” (e.g., pre-Cambrian), but it is the full span relevant to our 540 Myr climate
-  forcing series.
+| Metric | Value |
+|--------|-------|
+| Partial correlation (volatility vs convergence) | r = 0.380 |
+| Controls | time + sampling PCA (PC1, PC2) + provinciality |
+| N bins | 40 |
+| Exact circular-shift p (all 40 shifts) | 0.050 |
+| Random-sampling circular-shift p (20k draws) | 0.025 |
+| Block bootstrap p (b=2) | 0.020 |
+| Block bootstrap p (b=3) | 0.021 |
+| OLS + Newey-West HAC p | 0.037 |
+| SARIMAX AR(0) p | 0.079 |
 
-## 2) What’s the best “insight” result right now?
+The two circular-shift p-values reflect different estimators for the same null. Exact enumeration with N=40 bins has a resolution floor of 1/40 = 0.025; the observed p=0.050 corresponds to 2 of 40 shifts producing correlations as extreme as observed. The random-sampling estimate approximates the continuous null distribution and gives p=0.025. Block bootstrap, which does not face this resolution constraint, consistently returns p=0.020–0.029.
 
-### A) Marine functional convergence tracks climate volatility (and survives key robustness checks)
+The SARIMAX result is marginal (p=0.079 for AR(0), AIC-selected). Higher AR orders weaken the signal further. The most conservative time-series model does not support the claim at α=0.05.
 
-Claim (operational):
-> When climate volatility is higher, distant marine provinces become **more functionally similar than expected from taxonomy**.
+## Baseline-shift mechanism
 
-Core pipeline artifacts:
-- Convergence bins (PBDB ecospace v2; full PBDB): `thesis/convergence/output_v3_fullpbdb/timebin_metrics.csv`
-- Independent forcing: `thesis/earth_system/climate_540myr/output/climate_540myr_timeseries.csv`
+The per-bin regression of functional similarity on taxonomic similarity reveals that volatility raises the intercept (baseline functional similarity when taxonomy diverges) without measurably changing the slope. This "baseline shift" is the mechanistic signature: volatile climates make provinces more functionally similar even when they share few genera, consistent with convergent environmental filtering rather than taxonomic homogenisation.
 
-Initial independent forcing test:
-- `thesis/convergence/output_independent_forcing/summary.md`
+## Robustness battery
 
-Robustness upgrade (important):
-- Added sampling proxies from `collection_no` (and an autocorrelation-aware p-value via circular shifts).
-- Full-PBDB summary: `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb/summary.md`
-- Macrostrat sensitivity check (naive covariate stacking): `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb_macrostrat_v2/summary.md`
-- Macrostrat + PBDB sampling index (PCA; fixes collinearity): `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb_macrostrat_pca_v1/summary.md`
-- Pair-level regression (cluster-robust + circular-shift null; publication-oriented): `thesis/synthesis/output_pair_level_model_volatility_v1/summary.md`
+### Leave-one-out stability
+All 40 leave-one-out partial correlations are positive. Range: [0.320, 0.473]. No single bin drives the result. The most influential bin (270 Ma, late Permian) reduces r to 0.320 when dropped.
 
-Additional “coherence” upgrade (new knob):
-- Derived multiple spatial-coherence / patchiness metrics from the CESM ΔT fields (not just magnitude).
-- Tested whether coherence improves inference beyond magnitude:
-  - `thesis/synthesis/output_coherence_beats_volatility/summary.md`
-  - Key outcome: several coherence metrics correlate with convergence, but they are also strongly correlated with magnitude in this dataset; coherence does **not** add independent explanatory power once magnitude is included.
+### Lagerstaetten sensitivity
+Excluding 5 bins containing major Lagerstätten (Burgess Shale, Chengjiang, Mazon Creek, Solnhofen, Messel): r = 0.319, exact shift p = 0.086. The signal weakens but remains positive; the loss of 5 bins (12.5% of data) predictably reduces power.
 
-Key numbers (partial correlations; volatility vs convergence residuals):
-- Controls = time only: `corr ≈ +0.409` (iid perm‑p ≈ `0.008`; circular‑shift p ≈ `0.026`)
-- Controls = time + `log1p(n_localities)`: `corr ≈ +0.289` (iid perm‑p ≈ `0.071`; circular‑shift p ≈ `0.106`)
-- Controls = time + locality + marine collections + marine occurrences: `corr ≈ +0.350` (iid perm‑p ≈ `0.027`; circular‑shift p ≈ `0.027`)
-- Add provinciality too: `corr ≈ +0.358` (iid perm‑p ≈ `0.025`; circular‑shift p ≈ `0.028`)
+### SARIMAX AR order sweep
 
-Interpretation (guarded, but now much less fragile):
-- This is no longer “just a time trend” or a trivial sampling artifact (we explicitly controlled for sampling proxies and used a
-  time-series-aware null).
-- It’s plausibly a real macroecological pattern: volatility pushes different regions toward similar “jobs” even if the species
-  differ.
+| Order | AIC | BIC | vol_β | vol_p |
+|-------|-----|-----|-------|-------|
+| AR(0) | -160.5 | -148.8 | 0.012 | 0.079 |
+| AR(1) | -158.7 | -145.4 | 0.010 | 0.162 |
+| AR(2) | -153.6 | -138.9 | 0.008 | 0.325 |
+| AR(3) | -157.7 | -141.5 | 0.005 | 0.399 |
 
-New mechanistic signature (strongly aligned with “different taxa, same jobs”):
-- When we fit the per-bin relationship `functional_similarity ~ taxonomic_similarity`, forcing does **not** measurably change the slope,
-  but it **does** raise the intercept (baseline functional similarity at low taxonomic similarity):
-  - `thesis/synthesis/output_function_taxonomy_coupling_v3_binslopes/summary.md`
-  - This is consistent with the “synchronized filter” story: even taxonomically distinct provinces converge on similar role mixes.
+AIC selects AR(0). The volatility effect is marginal and weakens with higher AR orders. This is the most conservative inference and should be stated explicitly.
 
-Additional mechanistic probe (new; did **not** support the “interchangeability increases” story):
-- We tested whether volatility makes roles *less clade-specific* using mutual information between taxonomic groups (`family`/`order`) and roles
-  (`diet|motility|life_habit`) on the **same bins + localities** as the main convergence pipeline.
-  - Result: no detectable volatility association for the primary normalized metric (bin-level; time + sampling PCA + provinciality controls):
-  - `thesis/synthesis/output_role_interchangeability_mi_v1/summary.md`
+### OLS + HAC
+Newey-West with automatic bandwidth (3 lags, Andrews rule): β = 0.013, SE = 0.006, p = 0.037.
 
-New interpretability pass (“what jobs change?”; sampling+autocorr-aware):
-- We quantified two simple, interpretable category dynamics across bins:
-  1) **Geographic ubiquity** = fraction of localities where a category appears at all.
-  2) **Mean within-locality share** = average fraction of genera in a locality belonging to that category.
-- Then we tested each against volatility with the same bin-level controls as the pair-level model (time + sampling PCA + provinciality),
-  and used the same circular-shift null.
-  - Output: `thesis/synthesis/output_role_jobs_volatility_v1/summary.md`
+## Ecospace coverage confound
 
-What it suggests (mechanistic story, still exploratory):
-- Under higher volatility, **locality composition shifts toward “sit-and-filter” roles**:
-  - Diet: **suspension feeder** mean share tends to increase (shift p≈0.075).
-  - Motility: **stationary** mean share increases (shift p≈0.10) while **facultatively mobile** decreases (shift p≈0.025).
-  - At the specific role-combination level, several **suspension feeder | stationary | epifaunal** roles rise, while some
-    **fast-moving carnivore** roles fall (smallest shift p≈0.025, but these do **not** survive BH correction over many roles).
-- So the best, honest interpretation is: volatility raises baseline functional similarity partly because it **compresses ecosystems toward a
-  smaller set of robust, low-energy role mixtures**, and/or removes some high-energy/mobile predator roles from many localities.
+PBDB ecospace annotation completeness correlates at r = 0.90 with the convergence metric (raw). Both increase toward the present: coverage vs time r = 0.91. This raised concern that annotation quality, not ecology, drives the signal.
 
-Mechanism hardening attempt (pre-registered composite index; negative result but informative):
-- We defined a single “low-energy / sit-and-filter” composite index from ecospace axes (low-energy diets/motility/life-habits minus high-energy ones),
-  tested it vs volatility with the same circular-shift null, and tested mediation/attenuation in the pair-level model.
-- Result: the index does **not** track volatility under circular shifts (p≈0.20) and does not materially attenuate the volatility coefficient (≈5%).
-  - `thesis/synthesis/output_low_energy_index_mediation_v1/summary.md`
-Interpretation: the convergence signal is unlikely to be explained purely by a *global mean* shift toward low-energy composition; the driver may be
-more about **spatial homogenization/constraint** than about changing the overall average mix.
+Partial correlations (controlling for time) clarify:
+- `frac_has_role` (any role assigned): partial r = −0.028 → entirely explained by time
+- `frac_marine_with_role` (marine + complete role): partial r = 0.365 → not fully absorbed by time
+- `frac_in_ecospace` (any ecospace entry): partial r = 0.375 → not fully absorbed by time
 
-### B) Dinosaur “missing-middle” weakens under volatility (intriguing but small-n)
+Adding `frac_marine_with_role` as a control to the primary specification: volatility r drops from 0.380 to 0.328, exact shift p = 0.10, block bootstrap p = 0.047. The signal is attenuated but survives the block bootstrap. The manuscript should acknowledge this honestly: marine-specific coverage confounds part of the variance.
 
-Claim (operational):
-> More volatility → dinosaur size distributions look less “barbell” (the middle is more filled in).
+## Era heterogeneity
 
-Artifact:
-- `thesis/body_size_stability/output_independent_stability/analysis_results.json`
+The signal concentrates in the Mesozoic:
 
-Strength:
-- The volatility ↔ gap metric is strong in the available bins (e.g., `corr ≈ +0.85` for the gap metric under one variant),
-  but **n is tiny** (≈8 usable bins for that test). This is the biggest fragility.
+| Era | N bins | Raw r | Perm p | Partial r (time) |
+|-----|--------|-------|--------|-------------------|
+| Paleozoic | 17 | −0.106 | 0.685 | 0.206 |
+| Mesozoic | 16 | 0.534 | 0.050 | 0.361 |
+| Cenozoic | 7 | 0.015 | 0.978 | — |
 
-Novelty positioning (so far):
-- Dinosaur size distribution shape/modality is studied (e.g., O’Gorman & Hone 2012; cached PDF under `thesis/literature/pdfs/`),
-  but I have not yet found work tying *missing-middle strength* to an **independent deep-time volatility series**.
+The Mesozoic concentration is not explained by volatility amplitude (Paleozoic and Cenozoic have higher mean volatility). Ecospace coverage is highest in the Paleozoic (0.58) and drops in the Cenozoic (0.18). Land area fraction and paleogeographic connectivity (coastline index, land components) differ across eras but do not obviously account for the pattern.
 
-## 3) Key reasons the claims could be wrong, and what we did about them
+## Clade restriction (negative result)
 
-### (i) “This is just sampling/rock record bias”
+Restricting to well-annotated clades eliminates the signal:
+- **Brachiopoda** (18 bins, 2471 genera): r = −0.09, shift p = 0.61
+- **Combined well-annotated** (32 bins, 3348 genera): r = −0.13, shift p = 0.38
+- Bivalvia and Gastropoda had too few qualifying bins.
 
-Fixes already implemented (marine convergence):
-- Added bin-level sampling proxies from PBDB **collections** and **occurrence counts** (marine‑classified) via
-  `data/processed/pbdb_occurrences_extended.parquet`.
-- The volatility→convergence association stays positive across control sets; it is statistically supported under PBDB sampling-proxy controls.
-- Macrostrat rock-record proxies are strongly collinear with PBDB sampling proxies; naively stacking multiple Macrostrat covariates destabilizes the residualization.
-- Using a **PCA sampling index** over PBDB+Macrostrat proxies resolves the collinearity: with controls `time + provinciality + sampling_PC1 + sampling_PC2`, the effect remains supported (circular-shift p ≈ 0.024 in `...macrostrat_pca_v1/...`).
+This is interpretable two ways: (a) the signal is a genuinely cross-clade phenomenon that requires mixing clades to emerge, or (b) the signal requires mixing well-annotated and poorly-annotated genera, suggesting annotation artifacts. The manuscript must present both.
 
-Still missing (publication-grade):
-- A single, principled sampling model (e.g., pair-level hierarchical model with regularization/priors) rather than bin-level residualization.
-- Explicit hierarchical models that separate biological signal from sampling structure.
+## Grid sensitivity
 
-### (ii) “Time bins are autocorrelated; your p-values are wrong”
+| Grid | N bins | r | Shift p |
+|------|--------|---|---------|
+| 10° | 50 | 0.234 | 0.16 |
+| 15° | 48 | 0.225 | 0.063 |
+| 20° | 50 | 0.072 | 0.82 |
 
-Fix implemented (marine convergence):
-- Circular-shift null on residuals (preserves autocorrelation in time-ordered bins).
-- Effect remains supported under shift p-values.
+The primary analysis uses 15° bins (matching the CESM grid resolution). The signal is positive at 10° and 15° but vanishes at 20°, suggesting the spatial scale matters and very coarse grids wash out the pattern.
 
-Still missing (publication-grade):
-- Explicit time-series models (e.g., GLS/AR errors) or block bootstraps tuned to the series’ autocorrelation.
+## Terrestrial pilot (negative result)
 
-Update (now done, first pass):
-- We added an explicit **bin-level time-series regression** with AR(1) errors (SARIMAX) and an OLS+HAC sensitivity check, plus a **pair-level mixed-effects** model (random bin effects).
-  - `thesis/synthesis/output_time_series_hierarchical_models_v1/summary.md`
-  - Key nuance: OLS/HAC supports `vol_z > 0` on bin-level excess similarity, while SARIMAX AR(1) is more conservative (vol term not supported in that spec). The pair-level mixed model supports `vol_z > 0`.
-  - This is good “reviewer-proofing”: it explicitly shows what changes when we assume serially-correlated errors.
+Applying the same pipeline to terrestrial vertebrates (3663 genera, 21k occurrences, 129 roles, 11 qualifying bins): r = −0.40, perm p = 0.22. No evidence of the marine convergence pattern in the terrestrial realm, though power is low.
 
-### (iii) “PBDB ecospace traits are incomplete/heterogeneous”
+## Reproduction
 
-What we did:
-- Role decomposition into diet/motility/life habit to check which axis drives the signal:
-  - `thesis/convergence/output_role_decomposition/summary.md`
+```bash
+python thesis/run_all.py              # full pipeline
+python thesis/run_all.py --skip-core  # skip data-heavy convergence recomputation
+python thesis/run_all.py --only-hardening  # only sensitivity scripts
+```
 
-Still missing:
-- Family/order-level ecospace fallback to reduce missingness.
-- Sensitivity to alternative role codings and to ecospace missingness by time/clade.
+## Key outputs
 
-### (iv) “You can’t unify dinosaurs with marine convergence”
-
-True right now:
-- PBDB ecospace terrestrial coverage is too thin to replicate the marine convergence pipeline for dinosaurs.
-- The Mesozoic-only slice does not cleanly reproduce the same marine convergence–volatility signal in our bins, even though the
-  dinosaur size-structure signal is strongest there.
-
-So the unification is currently conceptual (“volatility disrupts stable structure, pushes convergence”), not a single tight,
-same-domain empirical chain.
-
-## 4) What’s next (best path to a publication-ready write-up)
-
-**If the bar is publication-ready with real insight (not just method), the best bet is to center the write-up on the marine result** and
-treat dinosaur size structure as an exploratory extension unless we can expand it.
-
-Concrete next steps (in order):
-1) Replace the current “macro covariate sensitivity check” with a publication-grade sampling model:
-   - Macrostrat is now wired in (`data/processed/external/macrostrat/macrostrat_sections_timeseries_bin10.csv`) and the effect remains positive but weakens (borderline under circular shifts when adding a single Macrostrat covariate).
-   - Done: Macrostrat+PBDB sampling index via PCA (stable under collinearity) in `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb_macrostrat_pca_v1/summary.md`.
-   - Next: move to a pair-level model (and add spatial standardization) so sampling control is part of a single inferential model rather than residualization.
-2) Move from bin-level correlations to pair-level/hierarchical models:
-   - Model pairwise functional similarity as a function of taxonomic similarity, volatility, time, sampling proxies, province
-     structure; include random effects by bin and maybe by locality.
-3) Probe heterogeneity explicitly (this is now a real clue, not a nuisance):
-   - In our current bins, the volatility→convergence signal is strong in the **Mesozoic** and weak in the **Paleozoic** under within-era controls:
-     `thesis/synthesis/output_subera_volatility_convergence/summary.md`
-   - That suggests the next “mechanism chapter” is to ask *what differs across eras* (oxygen regime? connectivity? baseline ecospace filling? sampling structure?).
-4) Terrestrial functional dataset acquisition:
-   - Either build a curated trait map for tetrapods/dinosaurs (external datasets), or shift to a terrestrial clade with better
-     functional annotation.
-5) Dinosaur robustness:
-   - Add more mass datasets / alternative size proxies; propagate uncertainty; increase bin count if possible.
-
-## 5) Where to look
-
-- Convergence vs volatility robustness (full PBDB): `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb/summary.md`
-- Convergence vs volatility robustness (+ Macrostrat): `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb_macrostrat_v2/summary.md`
-- Convergence vs volatility robustness (+ Macrostrat, PCA sampling index): `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb_macrostrat_pca_v1/summary.md`
-- Role/job interpretability (which ecospace categories shift with volatility): `thesis/synthesis/output_role_jobs_volatility_v1/summary.md`
-- Low-energy composite index mediation attempt: `thesis/synthesis/output_low_energy_index_mediation_v1/summary.md`
-- Explicit time-series + hierarchical inference (AR errors + mixed effects): `thesis/synthesis/output_time_series_hierarchical_models_v1/summary.md`
-- Synthesis attempts + dinosaur alignment: `thesis/synthesis/output_volatility_filter_v4/summary.md`
-- Dinosaur size results: `thesis/body_size_stability/RESULTS.md`
-- Convergence results: `thesis/convergence/RESULTS.md`
-- Novelty memo: `thesis/synthesis/NOVELTY_REVIEW.md`
-- Draft paper + supplement: `thesis/manuscript_convergence_volatility/manuscript.md`, `thesis/manuscript_convergence_volatility/supplement.md`
-- Reproduce everything: `python thesis/run_all.py`
+| What | Path |
+|------|------|
+| Core merged bins | `thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb_macrostrat_pca_v1/merged.csv` |
+| Robustness battery | `thesis/synthesis/output_robustness_battery/` |
+| Ecospace coverage | `thesis/synthesis/output_ecospace_missingness/` |
+| Era heterogeneity | `thesis/synthesis/output_era_heterogeneity/` |
+| Clade restriction | `thesis/synthesis/output_clade_restriction/` |
+| Grid sensitivity | `thesis/synthesis/output_grid_sensitivity/` |
+| Terrestrial pilot | `thesis/synthesis/output_terrestrial_pilot/` |
+| Pair-level model | `thesis/synthesis/output_pair_level_model_volatility_v1/` |
+| Time-series models | `thesis/synthesis/output_time_series_hierarchical_models_v1/` |
+| Manuscript + supplement | `thesis/manuscript_convergence_volatility/` (gitignored) |
+| Figures | `thesis/manuscript_convergence_volatility/figures/` (gitignored) |
