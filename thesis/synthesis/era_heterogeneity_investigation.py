@@ -270,7 +270,7 @@ def main() -> None:
     for geo_col in ["land_area_fraction", "land_components", "coastline_index"]:
         key = f"{geo_col}_by_era"
         if key in results:
-            lines.extend([f"", f"### {geo_col}"])
+            lines.extend(["", f"### {geo_col}"])
             for era_name, vals in results[key].items():
                 lines.append(f"- {era_name}: mean={vals.get('mean', 'nan'):.3f}")
 

@@ -16,7 +16,6 @@ import matplotlib as mpl
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.patches import FancyArrowPatch
 
 # Publication style.
 mpl.rcParams.update({
@@ -274,7 +273,7 @@ def figure_4_robustness(bins: pd.DataFrame) -> None:
                    "OLS +\nHAC", "SARIMAX\nAR(0)"]
         pvals = [float("nan")] * 6
     colors_bar = ["#1f77b4"] * 6
-    bars = ax.bar(range(len(methods)), pvals, color=colors_bar, alpha=0.8, edgecolor="black", linewidth=0.5)
+    ax.bar(range(len(methods)), pvals, color=colors_bar, alpha=0.8, edgecolor="black", linewidth=0.5)
     ax.axhline(0.05, color="red", linewidth=1, linestyle="--", label="p = 0.05")
     ax.set_xticks(range(len(methods)))
     ax.set_xticklabels(methods, fontsize=8)
@@ -309,7 +308,6 @@ def figure_5_schematic() -> None:
 
     # Bar representation.
     y_start = 1.5
-    bw = 0.6
     for i, (role, val) in enumerate(roles_a.items()):
         ax.barh(y_start + i * 0.9, val, height=0.7, left=0.5, color="#2ca02c", alpha=0.6, edgecolor="black", linewidth=0.4)
         ax.text(0.3, y_start + i * 0.9, role, ha="right", va="center", fontsize=6.5)

@@ -287,7 +287,7 @@ def main() -> None:
                 f"- {clade_name} (n_bins={res['n_bins']}, n_genera={res['n_genera_with_ecospace']}): "
                 f"corr={test.get('corr', 'nan'):.3f}, shift-p={test.get('p_shift', 'nan'):.3g}"
             )
-    lines.extend(["", f"## Files", f"- Stats: `{out_dir / 'analysis_results.json'}`", f"- Figures: `{fig_dir}`"])
+    lines.extend(["", "## Files", f"- Stats: `{out_dir / 'analysis_results.json'}`", f"- Figures: `{fig_dir}`"])
     (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
     print(f"Wrote outputs to: {out_dir}")
 
