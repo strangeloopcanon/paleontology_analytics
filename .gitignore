@@ -60,8 +60,19 @@ thesis/literature/reading_lists/**/*.json
 # Output JSON (keep writeups/figures; treat structured outputs as regeneratable)
 thesis/**/output*/**/*.json
 
-# Output figures (generated; keep only curated figures outside `output*/`)
+# Output figures and summaries (generated; keep only curated artifacts outside `output*/`)
 thesis/**/output*/**/*.png
+thesis/**/output*/**/summary.md
+
+# Manuscript figures (generated from code; regeneratable)
+thesis/manuscript_convergence_volatility/figures/
+
+# Manuscript drafts (keep local until publication-ready)
+thesis/manuscript_convergence_volatility/manuscript.md
+thesis/manuscript_convergence_volatility/supplement.md
+
+# Dead-end / superseded analysis scripts + output dirs
+thesis/synthesis/_archive/
 
 # PDFs: keep only explicitly whitelisted open-access PDFs
 thesis/**/*.pdf
