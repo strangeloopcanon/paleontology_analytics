@@ -124,7 +124,7 @@ def run_ml_extinction_analysis(data_path="data/processed/merged_occurrences.parq
     accuracy = accuracy_score(y_test, y_pred)
     try:
         roc_auc = roc_auc_score(y_test, y_pred_proba)
-    except Exception:
+    except ValueError:
         roc_auc = 0.5  # If only one class in test set
     
     print("\n=== MODEL PERFORMANCE ===")

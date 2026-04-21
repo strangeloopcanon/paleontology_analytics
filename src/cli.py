@@ -1,4 +1,6 @@
 import argparse
+
+from src._logging import get_logger
 from src.acquisition.pbdb import fetch_pbdb_occurrences
 from src.acquisition.neotoma import fetch_neotoma_data
 from src.normalization.normalize import normalize_pbdb, normalize_neotoma, merge_datasets
@@ -7,6 +9,8 @@ from src.analysis.advanced_stats import plot_biogeographic_network, calculate_sq
 from src.analysis.sota_stats import analyze_biogeographic_dynamics
 from src.analysis.ml_extinction import run_ml_extinction_analysis
 from src.analysis.build_dashboard import build_dashboard_assets
+
+logger = get_logger(__name__)
 
 def main():
     parser = argparse.ArgumentParser(description="Paleontology Data Pipeline CLI")
@@ -39,11 +43,19 @@ def main():
     args = parser.parse_args()
 
     if args.command == "download":
+        logger.info(
+            "starting_download",
+            extra={"source": args.source, "interval": getattr(args, "interval", None), "output_dir": args.output},
+        )
         if args.source == "pbdb":
             fetch_pbdb_occurrences(interval=args.interval, output_dir=args.output)
         elif args.source == "neotoma":
             fetch_neotoma_data(output_dir=args.output)
     elif args.command == "normalize":
+        logger.info(
+            "starting_normalize",
+            extra={"source": args.source, "input_dir": args.input, "output_dir": args.output},
+        )
         if args.source == "pbdb":
             normalize_pbdb(input_dir=args.input, output_dir=args.output)
         elif args.source == "neotoma":
@@ -51,6 +63,10 @@ def main():
         elif args.source == "merge":
             merge_datasets(input_dir=args.input, output_dir=args.output)
     elif args.command == "analyze":
+        logger.info(
+            "starting_analysis",
+            extra={"analysis_type": args.type, "input_path": args.input, "output_dir": args.output},
+        )
         if args.type == "basic":
             plot_diversity_curve(data_path=args.input, output_dir=args.output)
             plot_map(data_path=args.input, output_dir=args.output)

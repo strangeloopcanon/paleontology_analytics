@@ -11,7 +11,7 @@ This folder contains analysis code + writeups aimed at testing three related, hi
    - After “perturbations”, do regions become *functionally* similar even when they are *taxonomically* different?
 
 2) **Convergence vs fragmentation (provinciality)**
-   - Is functional convergence stronger when biogeographic provinces are more fragmented / distinct?
+   - Is functional convergence stronger when biogeographic regions are more fragmented / distinct?
 
 3) **Convergence peaks during volatility (not stability)**
    - Is functional convergence strongest during globally volatile intervals (vs stable ones)?

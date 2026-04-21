@@ -8,7 +8,7 @@
 
 ## How the analysis works
 
-The core question: does climate volatility force taxonomically distinct marine provinces to converge on similar ecological roles?
+The core question: does climate volatility force taxonomically distinct marine regions to converge on similar ecological roles?
 
 ```
 PBDB occurrences (1.97M)          CESM paleoclimate (Li et al. 2022)

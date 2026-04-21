@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paleontology Analytics: The Report</title>
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" defer></script>
     <style>
         * {
             box-sizing: border-box;
@@ -45,6 +45,7 @@
         /* Navigation */
         .nav {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
             background: #fff;
             padding: 0;
@@ -220,14 +221,14 @@
         <p class="subtitle">Uncovering the hidden patterns of life's history</p>
     </header>
 
-		    <nav class="nav">
-		        <button class="active" onclick="showSection('pangea', this)">🌍 Pulse of Pangea</button>
-		        <button onclick="showSection('maps', this)">🗺️ Maps</button>
-		        <button onclick="showSection('extinctions', this)">💥 Mass Extinctions</button>
-		        <button onclick="showSection('ml', this)">🤖 AI Extinction Predictor</button>
-		        <button onclick="showSection('climate', this)">🌡️ Climate Drivers</button>
-		        <button onclick="showSection('taxonomy', this)">🦕 Life's Family Tree</button>
-		        <button onclick="showSection('explorer', this)">🔍 Data Explorer</button>
+		    <nav class="nav" role="tablist">
+		        <button role="tab" aria-selected="true" class="active" onclick="showSection('pangea', this)">🌍 Pulse of Pangea</button>
+		        <button role="tab" aria-selected="false" onclick="showSection('maps', this)">🗺️ Maps</button>
+		        <button role="tab" aria-selected="false" onclick="showSection('extinctions', this)">💥 Mass Extinctions</button>
+		        <button role="tab" aria-selected="false" onclick="showSection('ml', this)">🤖 AI Extinction Predictor</button>
+		        <button role="tab" aria-selected="false" onclick="showSection('climate', this)">🌡️ Climate Drivers</button>
+		        <button role="tab" aria-selected="false" onclick="showSection('taxonomy', this)">🦕 Life's Family Tree</button>
+		        <button role="tab" aria-selected="false" onclick="showSection('explorer', this)">🔍 Data Explorer</button>
 		    </nav>
 
     <div class="container">
@@ -457,10 +458,17 @@
     <script>
 	        function showSection(id, btn) {
 	            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-	            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+	            document.querySelectorAll('.nav button').forEach(b => {
+	                b.classList.remove('active');
+	                b.setAttribute('aria-selected', 'false');
+	            });
 	            document.getElementById(id).classList.add('active');
-	            if (btn) btn.classList.add('active');
+	            if (btn) {
+	                btn.classList.add('active');
+	                btn.setAttribute('aria-selected', 'true');
+	            }
 	            if (id === 'explorer') ensureExplorerLoaded();
+	            if (id === 'maps') ensureMapLoaded();
 	        }
 
 	        const layout = {
@@ -541,6 +549,97 @@
 	            renderTable(); // Initial render
 	        }
 
+	        let mapInitialized = false;
+	        let mapInitPromise = null;
+
+	        function initMap(mapData) {
+	            if (mapInitialized) return;
+	            mapInitialized = true;
+	            if (!mapData || !mapData.bins || !mapData.bins.length) return;
+
+	            const mapDiv = document.getElementById('paleoMap');
+	            const binKey = (b) => {
+	                const n = Number(b);
+	                if (Number.isFinite(n)) return (Math.round(n * 10) / 10).toFixed(1);
+	                return String(b);
+	            };
+	            const getPts = (b) => {
+	                const candidates = [binKey(b), String(b), String(Number(b)), String(parseInt(Number(b), 10))];
+	                for (const k of candidates) {
+	                    if (mapData.points && mapData.points[k]) return mapData.points[k];
+	                }
+	                return { lat: [], lng: [] };
+	            };
+	            const bins = mapData.bins;
+	            const firstKey = binKey(bins[0]);
+	            const firstPts = getPts(bins[0]);
+
+	            const baseTrace = {
+	                type: 'scattergeo', mode: 'markers',
+	                lat: firstPts.lat, lon: firstPts.lng,
+	                marker: { size: 4, color: '#16a085', opacity: 0.55 },
+	                hoverinfo: 'skip'
+	            };
+
+	            const frames = bins.map(b => {
+	                const key = binKey(b);
+	                const pts = getPts(b);
+	                return { name: key, data: [{ lat: pts.lat, lon: pts.lng }] };
+	            });
+
+	            const fmt = (v, digits = 3) => (v === null || v === undefined || Number.isNaN(v)) ? 'NA' : Number(v).toFixed(digits);
+	            const sliderSteps = bins.map(b => ({
+	                label: `${fmt(b, 0)} Ma`,
+	                method: 'animate',
+	                args: [[binKey(b)], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } }]
+	            }));
+
+	            Plotly.newPlot(mapDiv, [baseTrace], {
+	                ...layout,
+	                geo: {
+	                    projection: { type: 'natural earth' },
+	                    showland: true, landcolor: '#ecf0f1',
+	                    showcountries: false, showocean: true,
+	                    oceancolor: '#f8fbff', coastlinecolor: '#bdc3c7'
+	                },
+	                margin: { t: 20, r: 10, b: 10, l: 10 },
+	                updatemenus: [{
+	                    type: 'buttons', direction: 'left',
+	                    x: 0.02, y: 0.02, xanchor: 'left', yanchor: 'bottom', showactive: false,
+	                    buttons: [
+	                        { label: 'Play', method: 'animate', args: [null, { fromcurrent: true, frame: { duration: 250, redraw: true }, transition: { duration: 0 } }] },
+	                        { label: 'Pause', method: 'animate', args: [[null], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }] }
+	                    ]
+	                }],
+	                sliders: [{
+	                    x: 0.12, y: 0.02, xanchor: 'left', yanchor: 'bottom',
+	                    currentvalue: { prefix: 'Time: ', suffix: ' Ma', font: { size: 14 } },
+	                    pad: { t: 0, b: 0 }, steps: sliderSteps
+	                }]
+	            }, { displayModeBar: false }).then(() => {
+	                Plotly.addFrames(mapDiv, frames);
+	                Plotly.animate(mapDiv, [firstKey], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } });
+	            });
+	        }
+
+	        async function ensureMapLoaded() {
+	            if (mapInitialized) return;
+	            if (mapInitPromise) return mapInitPromise;
+	            mapInitPromise = (async () => {
+	                const mapDiv = document.getElementById('paleoMap');
+	                if (mapDiv) mapDiv.innerHTML = '<p style="color:#777; padding:20px; text-align:center;">Loading map data…</p>';
+	                try {
+	                    const payload = await fetch('map_points.json').then(r => r.json());
+	                    initMap(payload);
+	                } catch (e) {
+	                    mapInitPromise = null;
+	                    mapInitialized = false;
+	                    if (mapDiv) mapDiv.innerHTML = '<p style="color:#c0392b; padding:20px; text-align:center;">Failed to load map data.</p>';
+	                }
+	            })();
+	            return mapInitPromise;
+	        }
+
 	        async function ensureExplorerLoaded() {
 	            if (explorerInitialized) return;
 	            if (explorerInitPromise) return explorerInitPromise;
@@ -566,20 +665,27 @@
 	            return explorerInitPromise;
 	        }
 	
-			        Promise.all([
+			        Promise.allSettled([
 		            fetch('web_data.json').then(r => r.json()),
-		            fetch('map_points.json').then(r => r.json()),
 		            fetch('rates_data.json').then(r => r.json()),
 		            fetch('deep_time_data.json').then(r => r.json()),
 		            fetch('climate_data.json').then(r => r.json()),
 		            fetch('null_model_data.json').then(r => r.json()),
 		            fetch('taxonomy_data.json').then(r => r.json())
-			        ]).then(([webData, mapData, ratesData, deepTimeData, climateData, nullData, taxData]) => {
+			        ]).then((results) => {
+		            const val = (r) => r.status === 'fulfilled' ? r.value : null;
+		            const webData = val(results[0]);
+		            const ratesData = val(results[1]);
+		            const deepTimeData = val(results[2]);
+		            const climateData = val(results[3]);
+		            const nullData = val(results[4]);
+		            const taxData = val(results[5]);
+		            const unavailableHTML = '<p style="color:#999; padding:20px; text-align:center;">Data not available \u2014 run <code>python -m src.cli analyze --type dashboard</code> to generate.</p>';
 		
 		            // 1. MODULARITY
 		            const fmt = (v, digits = 3) => (v === null || v === undefined || Number.isNaN(v)) ? 'NA' : Number(v).toFixed(digits);
 	
-		            if (webData.sota && webData.sota.time && webData.sota.time.length) {
+		            if (webData && webData.sota && webData.sota.time && webData.sota.time.length) {
 		                const t = webData.sota.time;
 		                const y = webData.sota.modularity || [];
 		                const ySmooth = webData.sota.modularity_smooth || [];
@@ -639,20 +745,24 @@
 		                `;
 		            }
 	
-	            Plotly.newPlot('nullHistogram', [
-	                { x: nullData.null_distribution, type: 'histogram', marker: { color: '#ecf0f1' }, name: 'Random Chance' },
-	                { x: [nullData.observed_modularity], y: [5], type: 'scatter', mode: 'markers', marker: { size: 18, color: '#3498db', symbol: 'diamond' }, name: 'Observed Data' }
-	            ], {
-	                ...layout,
-	                title: `Observed vs. Random Mixing (bin ~${fmt(nullData.time_bin, 0)} Ma)`,
-	                xaxis: { title: 'Modularity Score' },
-	                yaxis: { showticklabels: false, title: '' },
-	                showlegend: false,
-	                margin: { t: 40, r: 30, b: 30, l: 30 }
-	            }, { displayModeBar: false });
+	            if (nullData && nullData.null_distribution) {
+	                Plotly.newPlot('nullHistogram', [
+	                    { x: nullData.null_distribution, type: 'histogram', marker: { color: '#ecf0f1' }, name: 'Random Chance' },
+	                    { x: [nullData.observed_modularity], y: [5], type: 'scatter', mode: 'markers', marker: { size: 18, color: '#3498db', symbol: 'diamond' }, name: 'Observed Data' }
+	                ], {
+	                    ...layout,
+	                    title: `Observed vs. Random Mixing (bin ~${fmt(nullData.time_bin, 0)} Ma)`,
+	                    xaxis: { title: 'Modularity Score' },
+	                    yaxis: { showticklabels: false, title: '' },
+	                    showlegend: false,
+	                    margin: { t: 40, r: 30, b: 30, l: 30 }
+	                }, { displayModeBar: false });
+	            } else {
+	                document.getElementById('nullHistogram').innerHTML = unavailableHTML;
+	            }
 	
 	            // 2. ML PREDICTION
-		            if (webData.ml && webData.ml.importance && webData.ml.features) {
+		            if (webData && webData.ml && webData.ml.importance && webData.ml.features) {
 		                Plotly.newPlot('mlChart', [{
 		                    x: webData.ml.importance,
 		                    y: webData.ml.features,
@@ -713,117 +823,27 @@
 		            }
 	
 	            // 3. CLIMATE
-	            Plotly.newPlot('climateChart', [
-	                { x: climateData.timeseries.map(r => r.time), y: climateData.timeseries.map(r => r.diversity), name: 'Biodiversity', yaxis: 'y1', line: { color: '#3498db', width: 4 } },
-                { x: climateData.temperature_curve.map(r => r.time), y: climateData.temperature_curve.map(r => r.temperature), name: 'Temperature (°C)', yaxis: 'y2', line: { color: '#f39c12', width: 4, dash: 'dot' } }
-            ], {
-                ...layout,
-                // title: 'Global Diversity vs. Temperature', // Removed to fix collision
-                xaxis: { title: 'Time (Million Years Ago)', autorange: 'reversed' },
-                yaxis: { title: 'Number of Genera', side: 'left', showgrid: false },
-                yaxis2: { title: 'Global Temp (°C)', side: 'right', overlaying: 'y', showgrid: false },
-                legend: { orientation: 'h', x: 0.5, y: 1.1, xanchor: 'center' },
-                margin: { t: 50, r: 60, b: 50, l: 60 } // Adjusted margins
-            }, { displayModeBar: false });
-	
-	            document.getElementById('climateStats').innerHTML = `
-	                <div class="stat-box"><div class="stat-value">${climateData.correlation.toFixed(3)}</div><div class="stat-label">Correlation Coefficient (r)</div></div>
-	            `;
-		            document.getElementById('climateCorrInline').innerText = climateData.correlation.toFixed(3);
+	            if (climateData && climateData.timeseries && climateData.temperature_curve) {
+	                Plotly.newPlot('climateChart', [
+	                    { x: climateData.timeseries.map(r => r.time), y: climateData.timeseries.map(r => r.diversity), name: 'Biodiversity', yaxis: 'y1', line: { color: '#3498db', width: 4 } },
+	                    { x: climateData.temperature_curve.map(r => r.time), y: climateData.temperature_curve.map(r => r.temperature), name: 'Temperature (°C)', yaxis: 'y2', line: { color: '#f39c12', width: 4, dash: 'dot' } }
+	                ], {
+	                    ...layout,
+	                    xaxis: { title: 'Time (Million Years Ago)', autorange: 'reversed' },
+	                    yaxis: { title: 'Number of Genera', side: 'left', showgrid: false },
+	                    yaxis2: { title: 'Global Temp (°C)', side: 'right', overlaying: 'y', showgrid: false },
+	                    legend: { orientation: 'h', x: 0.5, y: 1.1, xanchor: 'center' },
+	                    margin: { t: 50, r: 60, b: 50, l: 60 }
+	                }, { displayModeBar: false });
+	                document.getElementById('climateStats').innerHTML = `
+	                    <div class="stat-box"><div class="stat-value">${climateData.correlation.toFixed(3)}</div><div class="stat-label">Correlation Coefficient (r)</div></div>
+	                `;
+	                document.getElementById('climateCorrInline').innerText = climateData.correlation.toFixed(3);
+	            } else {
+	                document.getElementById('climateChart').innerHTML = unavailableHTML;
+	            }
 
-		            // 0. MAPS (animated)
-		            if (mapData && mapData.bins && mapData.bins.length) {
-		                const mapDiv = document.getElementById('paleoMap');
-		                const binKey = (b) => {
-		                    const n = Number(b);
-		                    if (Number.isFinite(n)) return (Math.round(n * 10) / 10).toFixed(1); // e.g. 530.0
-		                    return String(b);
-		                };
-		                const getPts = (b) => {
-		                    const candidates = [
-		                        binKey(b),
-		                        String(b),
-		                        String(Number(b)),
-		                        String(parseInt(Number(b), 10)),
-		                    ];
-		                    for (const k of candidates) {
-		                        if (mapData.points && mapData.points[k]) return mapData.points[k];
-		                    }
-		                    return { lat: [], lng: [] };
-		                };
-		                const bins = mapData.bins;
-		                const firstKey = binKey(bins[0]);
-		                const firstPts = getPts(bins[0]);
-
-		                const baseTrace = {
-		                    type: 'scattergeo',
-		                    mode: 'markers',
-		                    lat: firstPts.lat,
-		                    lon: firstPts.lng,
-		                    marker: { size: 4, color: '#16a085', opacity: 0.55 },
-		                    hoverinfo: 'skip'
-		                };
-
-		                const frames = bins.map(b => {
-		                    const key = binKey(b);
-		                    const pts = getPts(b);
-		                    return {
-		                        name: key,
-		                        data: [{
-		                            lat: pts.lat,
-		                            lon: pts.lng
-		                        }]
-		                    };
-		                });
-
-		                const sliderSteps = bins.map(b => ({
-		                    label: `${fmt(b, 0)} Ma`,
-		                    method: 'animate',
-		                    args: [[binKey(b)], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } }]
-		                }));
-
-		                Plotly.newPlot(mapDiv, [baseTrace], {
-		                    ...layout,
-		                    geo: {
-		                        projection: { type: 'natural earth' },
-		                        showland: true,
-		                        landcolor: '#ecf0f1',
-		                        showcountries: false,
-		                        showocean: true,
-		                        oceancolor: '#f8fbff',
-		                        coastlinecolor: '#bdc3c7'
-		                    },
-		                    margin: { t: 20, r: 10, b: 10, l: 10 },
-		                    updatemenus: [{
-		                        type: 'buttons',
-		                        direction: 'left',
-		                        x: 0.02,
-		                        y: 0.02,
-		                        xanchor: 'left',
-		                        yanchor: 'bottom',
-		                        showactive: false,
-		                        buttons: [
-		                            { label: 'Play', method: 'animate', args: [null, { fromcurrent: true, frame: { duration: 250, redraw: true }, transition: { duration: 0 } }] },
-		                            { label: 'Pause', method: 'animate', args: [[null], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }] }
-		                        ]
-		                    }],
-		                    sliders: [{
-		                        x: 0.12,
-		                        y: 0.02,
-		                        xanchor: 'left',
-		                        yanchor: 'bottom',
-		                        currentvalue: { prefix: 'Time: ', suffix: ' Ma', font: { size: 14 } },
-		                        pad: { t: 0, b: 0 },
-		                        steps: sliderSteps
-		                    }]
-		                }, { displayModeBar: false }).then(() => {
-		                    Plotly.addFrames(mapDiv, frames);
-		                    // Ensure the initial frame matches the initial data (in case key formats differ).
-		                    Plotly.animate(mapDiv, [firstKey], { mode: 'immediate', frame: { duration: 0, redraw: true }, transition: { duration: 0 } });
-		                });
-		            }
-
-		            // 00. MASS EXTINCTIONS (rates + examples)
+		            // MASS EXTINCTIONS (rates + examples)
 		            if (ratesData && Array.isArray(ratesData) && ratesData.length) {
 		                const times = ratesData.map(r => r.time);
 		                const ext = ratesData.map(r => r.extinction_rate);
@@ -907,46 +927,54 @@
 		            }
 
 		            // 4. TAXONOMY
-		            Plotly.newPlot('sunburstChart', [{
-		                type: 'sunburst',
-                ids: taxData.sunburst.ids,
-                labels: taxData.sunburst.labels,
-                parents: taxData.sunburst.parents,
-                values: taxData.sunburst.values,
-                branchvalues: 'total',
-                marker: { line: { width: 2 } }
-            }], {
-                margin: { l: 0, r: 0, b: 0, t: 0 },
-                font: { size: 16 }
-            }, { displayModeBar: false });
+		            if (taxData && taxData.sunburst) {
+		                Plotly.newPlot('sunburstChart', [{
+		                    type: 'sunburst',
+		                    ids: taxData.sunburst.ids,
+		                    labels: taxData.sunburst.labels,
+		                    parents: taxData.sunburst.parents,
+		                    values: taxData.sunburst.values,
+		                    branchvalues: 'total',
+		                    marker: { line: { width: 2 } }
+		                }], {
+		                    margin: { l: 0, r: 0, b: 0, t: 0 },
+		                    font: { size: 16 }
+		                }, { displayModeBar: false });
+		            } else {
+		                document.getElementById('sunburstChart').innerHTML = unavailableHTML;
+		            }
 
-            // Survivor Champions Table
-            let survivorHTML = '<table style="width:100%; border-collapse: collapse; margin-top: 20px;"><thead><tr style="background:#f8f9fa; text-align:left;"><th style="padding:10px;">Rank</th><th style="padding:10px;">Genus</th><th style="padding:10px;">Duration</th><th style="padding:10px;">Range</th></tr></thead><tbody>';
-            taxData.survivors.slice(0, 10).forEach((s, i) => {
-                survivorHTML += `<tr style="border-bottom:1px solid #eee;"><td style="padding:10px;">#${i + 1}</td><td style="padding:10px; font-weight:bold;">${s.genus}</td><td style="padding:10px;">${s.duration.toFixed(1)} Myr</td><td style="padding:10px; color:#777;">${s.range}</td></tr>`;
-            });
-            survivorHTML += '</tbody></table>';
-            document.getElementById('survivorTable').innerHTML = survivorHTML;
+		            if (taxData && taxData.survivors) {
+		                let survivorHTML = '<table style="width:100%; border-collapse: collapse; margin-top: 20px;"><thead><tr style="background:#f8f9fa; text-align:left;"><th style="padding:10px;">Rank</th><th style="padding:10px;">Genus</th><th style="padding:10px;">Duration</th><th style="padding:10px;">Range</th></tr></thead><tbody>';
+		                taxData.survivors.slice(0, 10).forEach((s, i) => {
+		                    survivorHTML += `<tr style="border-bottom:1px solid #eee;"><td style="padding:10px;">#${i + 1}</td><td style="padding:10px; font-weight:bold;">${s.genus}</td><td style="padding:10px;">${s.duration.toFixed(1)} Myr</td><td style="padding:10px; color:#777;">${s.range}</td></tr>`;
+		                });
+		                survivorHTML += '</tbody></table>';
+		                document.getElementById('survivorTable').innerHTML = survivorHTML;
+		            } else {
+		                document.getElementById('survivorTable').innerHTML = unavailableHTML;
+		            }
 
-            // Dino Stats
-            const dStats = taxData.dino_stats;
-            document.getElementById('dinoStats').innerHTML = `
-                <div class="stat-box"><div class="stat-value">${dStats.total_genera}</div><div class="stat-label">Dino Genera</div></div>
-                <div class="stat-box"><div class="stat-value">${dStats.total_occurrences}</div><div class="stat-label">Fossils Found</div></div>
-            `;
-
-	            Plotly.newPlot('dinoChart', [{
-	                x: taxData.dino_chart.time,
-	                y: taxData.dino_chart.diversity,
-	                type: 'scatter', mode: 'lines', fill: 'tozeroy',
-	                line: { color: '#27ae60', width: 3 }
-	            }], {
-	                ...layout,
-	                // title: 'Dinosaur Diversity Over Time',
-	                xaxis: { title: 'Time (Ma)', autorange: 'reversed' },
-	                yaxis: { title: 'Genera Count' },
-	                margin: { t: 20, r: 30, b: 50, l: 60 }
-	            }, { displayModeBar: false });
+		            if (taxData && taxData.dino_stats && taxData.dino_chart) {
+		                const dStats = taxData.dino_stats;
+		                document.getElementById('dinoStats').innerHTML = `
+		                    <div class="stat-box"><div class="stat-value">${dStats.total_genera}</div><div class="stat-label">Dino Genera</div></div>
+		                    <div class="stat-box"><div class="stat-value">${dStats.total_occurrences}</div><div class="stat-label">Fossils Found</div></div>
+		                `;
+		                Plotly.newPlot('dinoChart', [{
+		                    x: taxData.dino_chart.time,
+		                    y: taxData.dino_chart.diversity,
+		                    type: 'scatter', mode: 'lines', fill: 'tozeroy',
+		                    line: { color: '#27ae60', width: 3 }
+		                }], {
+		                    ...layout,
+		                    xaxis: { title: 'Time (Ma)', autorange: 'reversed' },
+		                    yaxis: { title: 'Genera Count' },
+		                    margin: { t: 20, r: 30, b: 50, l: 60 }
+		                }, { displayModeBar: false });
+		            } else {
+		                document.getElementById('dinoChart').innerHTML = unavailableHTML;
+		            }
 
 	        });
     </script>

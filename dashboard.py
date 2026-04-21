@@ -1,9 +1,7 @@
 import streamlit as st
 import os
 import subprocess
-import glob
 import sys
-from pathlib import Path
 
 st.set_page_config(
     page_title="Paleontology Analytics Dashboard",

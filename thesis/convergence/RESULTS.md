@@ -25,7 +25,7 @@ Result:
   - `corr(provinciality, convergence_js | time)` ≈ `+0.324`, perm‑p ≈ `0.039` (`n=40` bins; full PBDB incl. Cenozoic).
 
 Interpretation (guarded):
-- When provinces are more taxonomically distinct, they can still look **more similar in functional composition than expected** → consistent with “repeated filling” of similar ecospace roles across separated regions.
+- When regions are more taxonomically distinct, they can still look **more similar in functional composition than expected** → consistent with “repeated filling” of similar ecospace roles across separated regions.
 
 ## Q3) Convergence peaks during volatility (not stability)
 

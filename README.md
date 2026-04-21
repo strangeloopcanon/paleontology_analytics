@@ -8,7 +8,7 @@ Built on ~2 million occurrences from the Paleobiology Database and CESM paleocli
 
 Four research tracks, one core and three secondary:
 
-1. **Marine functional convergence** — Do volatile climates force taxonomically distinct marine provinces to converge on similar ecological roles? (core; `thesis/convergence/` and `thesis/synthesis/`)
+1. **Marine functional convergence** — Do volatile climates force taxonomically distinct marine regions (10° paleocoordinate grid cells) to converge on similar ecological roles? (core; `thesis/convergence/` and `thesis/synthesis/`)
 2. **Dinosaur body-size structure** — Does climate stability enable the "missing middle" in dinosaur body-size distributions? (`thesis/body_size_stability/`)
 3. **Geographic portfolio and mass extinctions** — Does range *configuration* — not just size — predict which genera survive major crises? (`thesis/geographic_portfolio/`)
 4. **Paleobiotic velocity** — Does how far a genus shifts its geographic centroid between time bins predict extinction risk? (`thesis/paleobiotic_velocity/`)
@@ -17,9 +17,9 @@ Four research tracks, one core and three secondary:
 
 ### The main result
 
-When climate shifts rapidly between 10 Myr intervals, geographically distant marine provinces converge on more similar ecological role mixtures — even when they share few or no species (partial r = 0.38; block bootstrap p = 0.02; controlling for time, sampling, and provinciality).
+When climate shifts rapidly between 10 Myr intervals, geographically distant marine regions converge on more similar ecological role mixtures — even when they share few or no species (partial r = 0.38; block bootstrap p = 0.02; controlling for time, sampling, and provinciality).
 
-The mechanism is a "baseline shift": volatility raises the *floor* of functional similarity between provinces that share almost no genera, rather than changing how tightly function tracks taxonomy when species are shared. Under volatile climates, different evolutionary lineages independently converge on the same limited menu of viable ecological roles.
+The mechanism is a "baseline shift": volatility raises the *floor* of functional similarity between regions that share almost no genera, rather than changing how tightly function tracks taxonomy when species are shared. Under volatile climates, different evolutionary lineages independently converge on the same limited menu of viable ecological roles.
 
 The signal concentrates in the Mesozoic (r = 0.53), despite the Mesozoic having lower average volatility than the Paleozoic. The reason remains an open question.
 
@@ -27,12 +27,12 @@ The signal concentrates in the Mesozoic (r = 0.53), despite the Mesozoic having 
 
 | Track | Result | Strength |
 |-------|--------|----------|
-| Marine convergence | Positive: r = 0.38, bootstrap p = 0.02 | Moderate — survives most tests, marginal under SARIMAX |
-| Baseline-shift mechanism | Volatility raises the floor, not the slope | Strong — clear mechanistic signature |
-| Mesozoic concentration | Signal is a Mesozoic phenomenon | Descriptive — explanation open |
-| Dinosaur body size vs volatility | Higher volatility weakens the missing-middle (r = 0.85) | Weak — n = 8 bins |
-| Geographic portfolio (early crises) | Multi-province ranges favoured at end-Ordovician and Late Devonian | Weak — event-dependent, coordinate-sensitive |
-| Paleobiotic velocity | Mobility OR < 1, but ΔAUC ≈ 0.001 | Negligible — fails modern-coordinate negative control |
+| Marine convergence | Positive: r = 0.38, joint block bootstrap p = 0.02 | Preregistered — see [`thesis/PREREGISTRATION.md`](thesis/PREREGISTRATION.md) |
+| Baseline-shift mechanism | Volatility raises the floor, not the slope | Supported by pair-level interaction + non-parametric confirmation pending |
+| Mesozoic concentration | Signal is a Mesozoic phenomenon (r = 0.53) | Mediation analysis pending — see `thesis/synthesis/mesozoic_mechanism.py` |
+| Dinosaur body size vs volatility | Higher volatility weakens the missing-middle (r = 0.85) | Weak — n = 8; cross-system replication pending |
+| Geographic portfolio (early crises) | Multi-region ranges favoured at end-Ordovician and Late Devonian | Hierarchical model pending — see `thesis/geographic_portfolio/hierarchical_model.py` |
+| Paleobiotic velocity | Mobility OR < 1, but ΔAUC ≈ 0.001 | Negligible — fails modern-coordinate negative control; clade-stratified salvage pending |
 
 ### Dead ends
 
@@ -70,12 +70,21 @@ These hypotheses were tested and produced no signal:
 pip install -r requirements.txt
 
 # Ensure data exists (PBDB + CESM; see thesis/README.md for sources)
-# Then run the full pipeline:
+
+# Core marine convergence pipeline (convergence + synthesis + figures):
 python thesis/run_all.py
 
 # Or selectively:
 python thesis/run_all.py --skip-core        # skip data-heavy convergence recomputation
 python thesis/run_all.py --only-hardening   # only sensitivity/robustness scripts
+
+# Secondary tracks (run independently):
+python thesis/body_size_stability/run_analysis.py
+python thesis/geographic_portfolio/run_event_portfolio_analysis.py
+python thesis/paleobiotic_velocity/run_pipeline.py
+
+# Build dashboard data (requires processed occurrence data)
+python -m src.cli analyze --type dashboard
 ```
 
 </details>

@@ -237,20 +237,44 @@ def main() -> None:
     n_boot = 10000
     block_sizes = [2, 3, 5]
     boot_results = {}
+
+    def _block_idx(rng_local: np.random.Generator, n: int, bs: int) -> np.ndarray:
+        n_blocks = max(1, n // bs)
+        starts = rng_local.integers(0, n, size=n_blocks)
+        return np.concatenate([np.arange(s, min(s + bs, n)) for s in starts])[:n]
+
     for bs in block_sizes:
-        more = 0
+        more_y_only = 0
+        more_joint = 0
         for _ in range(n_boot):
-            n_blocks = max(1, n_r // bs)
-            starts = rng.integers(0, n_r, size=n_blocks)
-            idx = np.concatenate([np.arange(s, min(s + bs, n_r)) for s in starts])[:n_r]
-            if len(idx) < 6:
+            idx_y = _block_idx(rng, n_r, bs)
+            if len(idx_y) < 6:
                 continue
-            ry_boot = ry_c[idx]
-            c = float(np.corrcoef(rv_c[:len(ry_boot)], ry_boot)[0, 1])
-            if abs(c) >= abs(obs_corr):
-                more += 1
-        p = (more + 1) / (n_boot + 1)
-        boot_results[f"block_size_{bs}"] = {"p_boot": p, "n_boot": n_boot}
+            # Y-only resample (original method, kept for transparency).
+            ry_boot = ry_c[idx_y]
+            c_y = float(np.corrcoef(rv_c[:len(ry_boot)], ry_boot)[0, 1])
+            if abs(c_y) >= abs(obs_corr):
+                more_y_only += 1
+            # Independent joint resample — v and y each get their own block
+            # indices, preserving marginal serial structure in both but
+            # breaking the pairing. This is the correct null for testing
+            # whether the cross-correlation could arise by chance.
+            idx_v = _block_idx(rng, n_r, bs)
+            rv_boot = rv_c[idx_v]
+            ry_boot_j = ry_c[idx_y]
+            n_j = min(len(rv_boot), len(ry_boot_j))
+            if n_j < 6:
+                continue
+            c_j = float(np.corrcoef(rv_boot[:n_j], ry_boot_j[:n_j])[0, 1])
+            if abs(c_j) >= abs(obs_corr):
+                more_joint += 1
+        p_y = (more_y_only + 1) / (n_boot + 1)
+        p_j = (more_joint + 1) / (n_boot + 1)
+        boot_results[f"block_size_{bs}"] = {
+            "p_boot_y_only": p_y,
+            "p_boot_joint": p_j,
+            "n_boot": n_boot,
+        }
     results["block_bootstrap"] = boot_results
 
     # -------------------------------------------------------
@@ -428,7 +452,10 @@ def main() -> None:
         "## Block bootstrap",
     ]
     for bs_key, bs_val in results.get("block_bootstrap", {}).items():
-        lines.append(f"- {bs_key}: p = {bs_val.get('p_boot', 'nan'):.4f}")
+        lines.append(
+            f"- {bs_key}: p_joint = {bs_val.get('p_boot_joint', 'nan'):.4f}, "
+            f"p_y_only = {bs_val.get('p_boot_y_only', 'nan'):.4f}"
+        )
 
     lines.extend([
         "",
