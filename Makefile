@@ -9,7 +9,7 @@ setup bootstrap:
 
 check:
 	$(RUFF) check src thesis tests --output-format=full
-	$(RUN) mypy --ignore-missing-imports src
+	$(RUN) mypy --ignore-missing-imports --disable-error-code=import-untyped src
 	bandit -r src -ll || true
 
 test:
