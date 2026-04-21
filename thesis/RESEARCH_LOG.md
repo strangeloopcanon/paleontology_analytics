@@ -70,7 +70,18 @@ Script: `synthesis/role_job_drivers_volatility.py` (now archived).
 
 **Verdict.** Suggestive pattern toward "sit-and-filter" roles, but not statistically robust.
 
-### Does a pre-registered low-energy composite mediate the effect?
+### Functional fingerprint: which roles expand under volatile climates?
+
+**Hypothesis.** If volatile climates force convergence, specific ecological roles should consistently over- or under-represent in high-volatility bins relative to low-volatility bins.
+
+**Test.** For each bin, computed role-frequency residuals vs the global mean. Split bins by median volatility and compared role representation. 172 distinct roles; 20 high-vol bins, 20 low-vol bins.
+Script: `synthesis/functional_fingerprint.py`.
+
+**Outcome.** The top 6 expanding roles under volatile climates are all suspension feeders (stationary + epifaunal/low-level epifaunal). The largest contracting role is fast-moving low-level epifaunal carnivore (Δ = −0.053). The pattern is consistent: volatile climates favour sit-and-wait strategies and disfavour active predation.
+
+**Verdict.** Positive. Individual roles shift the way the sit-and-filter hypothesis predicts. However, this role shift does not *mediate* the convergence signal (see composite test below) — the convergence is about spatial homogenisation of the overall mix, not a global shift toward any single strategy. The prediction about *which* roles expand was correct; the mechanism question (does this explain *why* regions converge) was not.
+
+### Does a low-energy composite mediate the convergence effect?
 
 **Hypothesis.** A composite "low-energy / sit-and-filter" index should track volatility and mediate the convergence signal.
 
@@ -79,7 +90,7 @@ Script: `synthesis/low_energy_index_mediation.py` (now archived).
 
 **Outcome.** The index does not track volatility under circular shifts (p ≈ 0.20) and attenuates the volatility coefficient by only ~5%.
 
-**Verdict.** Dead end. The convergence signal is not explained by a global shift toward low-energy composition. The mechanism may be spatial homogenisation rather than a change in the overall average role mix.
+**Verdict.** Negative. The convergence signal is not *explained by* a global shift toward low-energy composition, even though individual low-energy roles do expand (see functional fingerprint above). The mechanism is spatial homogenisation of the overall role mix rather than a change in the average composition.
 
 ### Does spatial coherence of forcing matter more than magnitude?
 
@@ -252,6 +263,7 @@ Script: `paleobiotic_velocity/run_pipeline.py`.
 | Paleobiotic velocity | Mobility → lower extinction risk | Negligible — trivial effect size, fails negative control |
 | Terrestrial convergence | No signal | Dead end |
 | Clade-restricted convergence | No signal | Dead end |
-| Low-energy mediation | No signal | Dead end |
+| Functional fingerprint | Suspension feeders expand, fast predators contract under volatility | Positive — individual roles shift as predicted |
+| Low-energy mediation | Composite does not mediate convergence | Dead end (individual roles shift, but the shift doesn't explain convergence) |
 | Role interchangeability (MI) | No signal | Dead end |
 | Coherence > magnitude | Can't separate from magnitude | Dead end |

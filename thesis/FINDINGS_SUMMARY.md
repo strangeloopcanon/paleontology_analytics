@@ -20,6 +20,8 @@ We call this residual "functional excess similarity." We computed it across ~2 m
 
 **Where it's strongest.** The signal concentrates in the Mesozoic (*r* = 0.53), despite the Mesozoic having *lower* average volatility than the Paleozoic. This rules out a simple dosage explanation and points toward an interaction between environmental forcing and the maturity of marine ecospace occupation.
 
+**Which roles shift.** Under volatile climates, stationary suspension feeders consistently expand (top 6 expanding roles are all suspension feeders) while fast-moving predators contract (largest contraction: fast-moving low-level epifaunal carnivores, Δ = −0.053). However, this role-level shift does not *explain* the convergence signal — the convergence is spatial homogenisation of the overall role mix across regions, not a global shift toward any single strategy.
+
 **What survives scrutiny.** The sign is stable across all 40 leave-one-out samples. Block bootstrap *p*-values range from 0.020 to 0.029. OLS with autocorrelation-robust standard errors gives *p* = 0.037. The most conservative time-series model (SARIMAX with AR errors) is marginal (*p* = 0.079).
 
 ## Honest caveats
