@@ -224,7 +224,7 @@ def export_dashboard_data(
         try:
             y_proba = clf.predict_proba(X_test)[:, 1]
             roc_auc = float(roc_auc_score(y_test, y_proba))
-        except Exception:
+        except ValueError:
             roc_auc = 0.5
 
         cm = confusion_matrix(y_test, y_pred, labels=[0, 1])

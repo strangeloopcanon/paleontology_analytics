@@ -6,11 +6,11 @@ A record of what was tested, what worked, and what didn't. Organised by research
 
 ## Track 1: Marine functional convergence
 
-The question that became the paper. Do volatile climates force taxonomically distinct marine provinces to converge on similar ecological roles?
+The question that became the paper. Do volatile climates force taxonomically distinct marine regions to converge on similar ecological roles?
 
 ### Does functional convergence follow perturbations? (PBDB turnover proxy)
 
-**Hypothesis.** After episodes of high genus turnover, distant provinces should become more functionally similar than expected from shared taxonomy.
+**Hypothesis.** After episodes of high genus turnover, distant regions should become more functionally similar than expected from shared taxonomy.
 
 **Test.** Correlated PBDB-derived global turnover (Jaccard between adjacent 10 Myr bins) with functional excess similarity.
 Script: `convergence/run_convergence_analysis.py`.
@@ -43,14 +43,14 @@ Script: `synthesis/robust_convergence_sampling_autocorr.py`.
 
 ### Is it a baseline shift or a slope change?
 
-**Hypothesis.** Volatility raises the *floor* of functional similarity between taxonomically distinct provinces (baseline shift), rather than changing how tightly function tracks taxonomy when taxa are shared (slope change).
+**Hypothesis.** Volatility raises the *floor* of functional similarity between taxonomically distinct regions (baseline shift), rather than changing how tightly function tracks taxonomy when taxa are shared (slope change).
 
 **Test.** Pair-level regression of functional similarity on taxonomic similarity, volatility, and their interaction, with cluster-robust standard errors.
 Script: `synthesis/pair_level_convergence_model.py`.
 
 **Outcome.** Volatility raises the intercept (β = 0.019, cluster p = 0.002). The interaction term (slope change) is also significant but does not survive circular-shift nulls (p = 0.15). Per-bin intercept positively correlates with volatility.
 
-**Verdict.** Positive. The baseline-shift signature is the mechanistic headline: volatile climates make provinces functionally similar even when they share no genera.
+**Verdict.** Positive. The baseline-shift signature is the mechanistic headline: volatile climates make distant regions functionally similar even when they share no genera.
 
 ### Which ecospace axes drive it?
 

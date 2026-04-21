@@ -1,8 +1,13 @@
-import pandas as pd
-import os
 import glob
 import json
+import os
+
+import pandas as pd
+
+from src._logging import get_logger
 from src.normalization.schema import OCCURRENCE_SCHEMA, PBDB_MAPPING
+
+logger = get_logger(__name__)
 
 def normalize_pbdb(input_dir="data/raw", output_dir="data/processed"):
     """
@@ -13,27 +18,25 @@ def normalize_pbdb(input_dir="data/raw", output_dir="data/processed"):
 
     files = glob.glob(os.path.join(input_dir, "pbdb_occurrences_*.csv"))
     if not files:
-        print("No PBDB data found in", input_dir)
+        logger.warning("no_pbdb_data", extra={"input_dir": input_dir})
         return None
 
-    print(f"Found {len(files)} PBDB files. Merging...")
-    
+    logger.info("merging_pbdb_files", extra={"file_count": len(files)})
+
     dfs = []
     for f in files:
-        print(f"Reading {f}...")
+        logger.info("reading_file", extra={"path": f})
         try:
-            # Read CSV
-            # Use low_memory=False to avoid mixed type warnings on large files
             df_chunk = pd.read_csv(f, low_memory=False)
             dfs.append(df_chunk)
-        except Exception as e:
-            print(f"Error reading {f}: {e}")
-            
+        except (FileNotFoundError, pd.errors.EmptyDataError, KeyError) as e:
+            logger.error("file_read_error", extra={"path": f, "error": str(e)})
+
     if not dfs:
         return None
-        
+
     df = pd.concat(dfs, ignore_index=True)
-    print(f"Total rows after merge: {len(df)}")
+    logger.info("merge_complete", extra={"row_count": len(df)})
 
     df = df.rename(columns=PBDB_MAPPING)
     df["source_db"] = "PBDB"
@@ -55,11 +58,11 @@ def normalize_neotoma(input_dir="data/raw", output_dir="data/processed"):
 
     files = glob.glob(os.path.join(input_dir, "neotoma_occurrences_*.json"))
     if not files:
-        print("No Neotoma data found in", input_dir)
+        logger.warning("no_neotoma_data", extra={"input_dir": input_dir})
         return None
 
     latest_file = max(files, key=os.path.getctime)
-    print(f"Processing Neotoma file: {latest_file}...")
+    logger.info("processing_neotoma_file", extra={"path": latest_file})
 
     try:
         with open(latest_file, 'r') as f:
@@ -70,8 +73,8 @@ def normalize_neotoma(input_dir="data/raw", output_dir="data/processed"):
         else:
             df = pd.DataFrame(data) # Fallback
             
-    except Exception as e:
-        print(f"Error reading file: {e}")
+    except (FileNotFoundError, pd.errors.EmptyDataError, KeyError) as e:
+        logger.error("file_read_error", extra={"path": latest_file, "error": str(e)})
         return None
 
     # Neotoma Mapping (approximate, needs inspection of real data)
@@ -97,8 +100,8 @@ def normalize_neotoma(input_dir="data/raw", output_dir="data/processed"):
         try:
             df['lat'] = df['site'].apply(lambda x: x.get('geography', {}).get('coordinates', [None, None])[1] if isinstance(x, dict) else None)
             df['lng'] = df['site'].apply(lambda x: x.get('geography', {}).get('coordinates', [None, None])[0] if isinstance(x, dict) else None)
-        except Exception as e:
-            print(f"Unable to extract site coordinates: {e}")
+        except (KeyError, TypeError, AttributeError) as e:
+            logger.warning("site_coord_extraction_failed", extra={"error": str(e)})
 
     df = df.rename(columns=neotoma_mapping)
     df["source_db"] = "Neotoma"
@@ -138,7 +141,7 @@ def _finalize_dataframe(df, output_dir, filename):
 
     output_path = os.path.join(output_dir, filename)
     df.to_parquet(output_path, index=False)
-    print(f"Normalized data saved to {output_path}")
+    logger.info("normalized_data_saved", extra={"path": output_path, "row_count": len(df)})
     return output_path
 
 def merge_datasets(input_dir="data/processed", output_dir="data/processed"):
@@ -152,14 +155,14 @@ def merge_datasets(input_dir="data/processed", output_dir="data/processed"):
             try:
                 dfs.append(pd.read_parquet(f))
             except Exception as e:
-                print(f"Skipping unreadable parquet {f}: {e}")
-    
+                logger.warning("skipping_unreadable_parquet", extra={"path": f, "error": str(e)})
+
     if not dfs:
-        print("No processed data found to merge.")
+        logger.warning("no_processed_data_to_merge")
         return
 
     merged_df = pd.concat(dfs, ignore_index=True)
     output_path = os.path.join(output_dir, "merged_occurrences.parquet")
     merged_df.to_parquet(output_path, index=False)
-    print(f"Merged {len(dfs)} datasets into {output_path}")
+    logger.info("datasets_merged", extra={"dataset_count": len(dfs), "path": output_path, "row_count": len(merged_df)})
     return output_path

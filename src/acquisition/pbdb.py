@@ -1,9 +1,14 @@
-import requests
-import pandas as pd
 import os
 from datetime import datetime
+
+import pandas as pd
+import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+from src._logging import get_logger
+
+logger = get_logger(__name__)
 
 PBDB_API_URL = "https://paleobiodb.org/data1.2/occs/list.csv"
 
@@ -46,16 +51,13 @@ def fetch_pbdb_occurrences(
     
     output_path = os.path.join(output_dir, filename)
     
-    print(f"Fetching PBDB data for interval: {interval}...")
-    
-    # PBDB API parameters
-    # 'all' gets a standard set of fields. 
-    # 'show=coords,class,paleoloc' adds coordinates, classification, and paleolocation.
+    logger.info("fetching_pbdb_data", extra={"interval": interval, "url": PBDB_API_URL})
+
     params = {
         "interval": interval,
         "show": "coords,class,paleoloc,strat,time,env,ref",
-        "limit": "all", # Get all records
-        "vocab": "pbdb" # Use PBDB vocabulary
+        "limit": "all",
+        "vocab": "pbdb",
     }
 
     try:
@@ -68,15 +70,20 @@ def fetch_pbdb_occurrences(
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
         
-        print(f"Data saved to {output_path}")
-        
-        # Verify it's a valid CSV by reading the first few lines
+        logger.info(
+            "data_saved",
+            extra={"path": output_path, "status_code": response.status_code},
+        )
+
         df = pd.read_csv(output_path, nrows=5)
-        print(f"Successfully downloaded. Columns: {list(df.columns)}")
+        logger.info(
+            "download_verified",
+            extra={"path": output_path, "columns": list(df.columns)},
+        )
         return output_path
 
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data from PBDB: {e}")
+        logger.error("pbdb_fetch_error", extra={"error": str(e), "url": PBDB_API_URL})
         return None
 
 if __name__ == "__main__":

@@ -1,28 +1,29 @@
-"""Grid-size sensitivity: rerun convergence at 15 and 20 degree grids.
+"""Grid-size sensitivity: rerun convergence at 10, 15 and 20 degree grids.
 
 Uses the same clade_restriction_test infrastructure but on the full occurrence set.
+Uses the FULL primary control set (time + sampling_PCA_PC12 + provinciality) to
+match the headline specification.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
 from matplotlib import pyplot as plt
 
-# Reuse the convergence computation from clade_restriction_test.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from thesis._lib import build_controls, ensure_dir
+
 from clade_restriction_test import compute_convergence_for_subset, _clean, _partial_corr_shift
-
-
-def _ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pbdb", default="data/processed/merged_occurrences.parquet")
-    ap.add_argument("--ecospace", default="thesis/convergence/output_v3_fullpbdb/ecospace_genus_mapping.csv")
+    ap.add_argument("--ecospace", default="thesis/convergence/output/ecospace_genus_mapping.csv")
     ap.add_argument("--earth", default="thesis/earth_system/climate_540myr/output/climate_540myr_timeseries.csv")
     ap.add_argument("--out", default="thesis/synthesis/output_grid_sensitivity")
     ap.add_argument("--seed", type=int, default=42)
@@ -30,8 +31,8 @@ def main() -> None:
 
     out_dir = Path(args.out)
     fig_dir = out_dir / "figures"
-    _ensure_dir(out_dir)
-    _ensure_dir(fig_dir)
+    ensure_dir(out_dir)
+    ensure_dir(fig_dir)
 
     occ = pd.read_parquet(
         args.pbdb,
@@ -74,10 +75,18 @@ def main() -> None:
 
         y = merged["functional_excess_similarity_js"].to_numpy(dtype=float)
         v = merged["delta_from_prev_T_field_meanabs"].to_numpy(dtype=float)
-        t = merged["time_bin"].to_numpy(dtype=float)
 
-        test = _partial_corr_shift(v, y, t.reshape(-1, 1))
-        results[f"grid_{grid_deg}"] = {"n_bins": len(merged), "test": test}
+        # Full controls matching the primary specification.
+        full_controls = build_controls(merged)
+        test_full = _partial_corr_shift(v, y, full_controls)
+        # Also keep time-only for comparison with prior runs.
+        t = merged["time_bin"].to_numpy(dtype=float)
+        test_time_only = _partial_corr_shift(v, y, t.reshape(-1, 1))
+        results[f"grid_{grid_deg}"] = {
+            "n_bins": len(merged),
+            "test_full_controls": test_full,
+            "test_time_only": test_time_only,
+        }
 
     (out_dir / "analysis_results.json").write_text(json.dumps(results, indent=2, default=str) + "\n")
 
@@ -91,22 +100,27 @@ def main() -> None:
         ax = axes[0][i]
         ax.scatter(m["delta_from_prev_T_field_meanabs"], m["functional_excess_similarity_js"],
                    s=40, alpha=0.8, color="#1f77b4")
-        r = results.get(f"grid_{grid_deg}", {}).get("test", {})
-        ax.set_title(f"{grid_deg}° grid\nr={r.get('corr', 'nan'):.3f}, p={r.get('p_shift', 'nan'):.3f}")
+        r = results.get(f"grid_{grid_deg}", {}).get("test_full_controls", {})
+        ax.set_title(f"{grid_deg}° grid (full controls)\nr={r.get('corr', 'nan'):.3f}, p={r.get('p_shift', 'nan'):.3f}")
         ax.set_xlabel("Volatility")
         ax.set_ylabel("Excess similarity")
     fig.tight_layout()
     fig.savefig(fig_dir / "grid_sensitivity.png", dpi=220)
     plt.close(fig)
 
-    lines = ["# Grid-size sensitivity", ""]
+    lines = ["# Grid-size sensitivity", "", "## Full primary controls (time + sampling_PCA_PC12 + provinciality)", ""]
     for grid_deg in grids:
         r = results.get(f"grid_{grid_deg}", {})
         if "error" in r:
             lines.append(f"- {grid_deg}° grid: {r['error']}")
         else:
-            t = r.get("test", {})
-            lines.append(f"- {grid_deg}° grid (n={r['n_bins']}): corr={t.get('corr', 'nan'):.3f}, shift-p={t.get('p_shift', 'nan'):.3g}")
+            tf = r.get("test_full_controls", {})
+            tt = r.get("test_time_only", {})
+            lines.append(
+                f"- {grid_deg}° grid (n={r['n_bins']}): "
+                f"full-controls r={tf.get('corr', 'nan'):.3f}, p={tf.get('p_shift', 'nan'):.3g} | "
+                f"time-only r={tt.get('corr', 'nan'):.3f}, p={tt.get('p_shift', 'nan'):.3g}"
+            )
     (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
     print(f"Wrote outputs to: {out_dir}")
 

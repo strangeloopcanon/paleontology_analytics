@@ -9,6 +9,7 @@ Figures:
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -36,14 +37,18 @@ mpl.rcParams.update({
 OUT_DIR = Path("thesis/manuscript_convergence_volatility/figures")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Data paths.
-MERGED = "thesis/synthesis/output_convergence_sampling_autocorr_fullpbdb_macrostrat_pca_v1/merged.csv"
+# Default canonical directories (overridable via CLI).
+_DEFAULT_CONVERGENCE_DIR = "thesis/convergence/output"
+_DEFAULT_SYNTHESIS_DIR = "thesis/synthesis/output_sampling_autocorr"
+
 LOO = "thesis/synthesis/output_robustness_battery/leave_one_out.csv"
-TIMEBIN = "thesis/convergence/output_v3_fullpbdb/timebin_metrics.csv"
+
+_merged_path = f"{_DEFAULT_SYNTHESIS_DIR}/merged.csv"
+_timebin_path = f"{_DEFAULT_CONVERGENCE_DIR}/timebin_metrics.csv"
 
 
-def load_bins() -> pd.DataFrame:
-    df = pd.read_csv(MERGED)
+def load_bins(merged_csv: str | None = None) -> pd.DataFrame:
+    df = pd.read_csv(merged_csv or _merged_path)
     df = df.dropna(subset=["functional_excess_similarity_js", "delta_from_prev_T_field_meanabs"]).copy()
     df = df.sort_values("time_bin", ascending=False).reset_index(drop=True)
     return df
@@ -132,13 +137,12 @@ def figure_1_timeseries(bins: pd.DataFrame) -> None:
     print("Wrote Figure 1")
 
 
-def figure_2_baseline_shift(bins: pd.DataFrame) -> None:
+def figure_2_baseline_shift(bins: pd.DataFrame, *, timebin_csv: str | None = None) -> None:
     """Per-bin intercept of functional~taxonomic plotted against volatility."""
     fig, ax = plt.subplots(figsize=(5.5, 4.5))
 
     if "model_js_intercept" not in bins.columns:
-        # Fall back to timebin metrics.
-        tb = pd.read_csv(TIMEBIN)
+        tb = pd.read_csv(timebin_csv or _timebin_path)
         bins = bins.merge(tb[["time_bin", "model_js_intercept"]], on="time_bin", how="left", suffixes=("", "_tb"))
         if "model_js_intercept_tb" in bins.columns:
             bins["model_js_intercept"] = bins["model_js_intercept_tb"]
@@ -356,10 +360,29 @@ def figure_5_schematic() -> None:
     print("Wrote Figure 5")
 
 
+def _parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Generate manuscript figures.")
+    p.add_argument(
+        "--convergence-dir",
+        default=_DEFAULT_CONVERGENCE_DIR,
+        help="Root of phase-1 convergence output (default: %(default)s).",
+    )
+    p.add_argument(
+        "--synthesis-dir",
+        default=_DEFAULT_SYNTHESIS_DIR,
+        help="Root of phase-2 synthesis output (default: %(default)s).",
+    )
+    return p.parse_args()
+
+
 def main() -> None:
-    bins = load_bins()
+    cli = _parse_args()
+    merged_csv = f"{cli.synthesis_dir}/merged.csv"
+    timebin_csv = f"{cli.convergence_dir}/timebin_metrics.csv"
+
+    bins = load_bins(merged_csv)
     figure_1_timeseries(bins)
-    figure_2_baseline_shift(bins)
+    figure_2_baseline_shift(bins, timebin_csv=timebin_csv)
     figure_3_era_comparison(bins)
     figure_4_robustness(bins)
     figure_5_schematic()

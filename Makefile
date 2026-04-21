@@ -5,9 +5,11 @@ setup bootstrap:
 
 check:
 	uvx ruff check src thesis tests --output-format=full
+	uv run mypy --ignore-missing-imports src
+	bandit -r src -ll || true
 
 test:
-	uv run pytest -q
+	uv run pytest -q --cov=src --cov-report=term-missing
 
 deps-audit:
 	@echo "Running advisory dependency audit (non-blocking in baseline mode)"

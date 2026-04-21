@@ -4,7 +4,7 @@ Current state of the marine volatility→convergence analysis, including all rob
 
 ## The claim
 
-When Phanerozoic climate volatility is higher, geographically distant marine provinces become more functionally similar than expected from shared taxonomy. We call this "functional excess similarity" — the residual of Jensen-Shannon functional similarity regressed on Jaccard taxonomic similarity across locality pairs. The pattern is consistent with environmental filtering: volatile climates compress ecosystems toward a narrower range of ecological roles, producing convergent community structure even among taxonomically distinct faunas.
+When Phanerozoic climate volatility is higher, geographically distant marine regions (10° paleocoordinate grid cells) become more functionally similar than expected from shared taxonomy. We call this "functional excess similarity" — the residual of Jensen-Shannon functional similarity regressed on Jaccard taxonomic similarity across locality pairs. The pattern is consistent with environmental filtering: volatile climates compress ecosystems toward a narrower range of ecological roles, producing convergent community structure even among taxonomically distinct faunas.
 
 ## Data
 
@@ -32,7 +32,7 @@ The SARIMAX result is marginal (p=0.079 for AR(0), AIC-selected). Higher AR orde
 
 ## Baseline-shift mechanism
 
-The per-bin regression of functional similarity on taxonomic similarity reveals that volatility raises the intercept (baseline functional similarity when taxonomy diverges) without measurably changing the slope. This "baseline shift" is the mechanistic signature: volatile climates make provinces more functionally similar even when they share few genera, consistent with convergent environmental filtering rather than taxonomic homogenisation.
+The per-bin regression of functional similarity on taxonomic similarity reveals that volatility raises the intercept (baseline functional similarity when taxonomy diverges) without measurably changing the slope. This "baseline shift" is the mechanistic signature: volatile climates make distant regions more functionally similar even when they share few genera, consistent with convergent environmental filtering rather than taxonomic homogenisation.
 
 ## Robustness battery
 

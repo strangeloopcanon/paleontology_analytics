@@ -8,15 +8,15 @@ Gould argued that history dominates: replay evolution and you get a different ou
 
 ## What we did
 
-We measured how functionally similar geographically separated marine provinces are, after accounting for whatever taxonomic overlap they share. The idea: if two distant regions share many of the same genera, they'll obviously have similar ecological roles. The interesting question is whether they're *more* functionally similar than their shared taxonomy would predict — whether different species are doing the same jobs.
+We measured how functionally similar geographically separated marine regions (10° paleocoordinate grid cells) are, after accounting for whatever taxonomic overlap they share. The idea: if two distant regions share many of the same genera, they'll obviously have similar ecological roles. The interesting question is whether they're *more* functionally similar than their shared taxonomy would predict — whether different species are doing the same jobs.
 
 We call this residual "functional excess similarity." We computed it across ~2 million fossil occurrences from the Paleobiology Database, spanning the last 540 million years in 40 time bins, using genus-level ecological role assignments (diet, motility, life habit). Then we tested whether this metric tracks an independent measure of climate volatility from CESM paleoclimate simulations.
 
 ## What we found
 
-**The central result.** When climate shifts rapidly between 10 Myr intervals, distant marine provinces converge on more similar ecological role mixtures — even when they share few or no species (partial *r* = 0.38; block bootstrap *p* = 0.020; controlling for time, sampling structure, and provinciality).
+**The central result.** When climate shifts rapidly between 10 Myr intervals, distant marine regions converge on more similar ecological role mixtures — even when they share few or no species (partial *r* = 0.38; block bootstrap *p* = 0.020; controlling for time, sampling structure, and provinciality).
 
-**How it works.** The effect is a "baseline shift." Volatility doesn't change how tightly function tracks taxonomy when provinces *do* share species. Instead, it raises the floor — the minimum functional similarity between provinces that share almost nothing taxonomically. Under volatile climates, even taxonomically alien provinces end up with similar job portfolios.
+**How it works.** The effect is a "baseline shift." Volatility doesn't change how tightly function tracks taxonomy when regions *do* share species. Instead, it raises the floor — the minimum functional similarity between regions that share almost nothing taxonomically. Under volatile climates, even taxonomically alien regions end up with similar job portfolios.
 
 **Where it's strongest.** The signal concentrates in the Mesozoic (*r* = 0.53), despite the Mesozoic having *lower* average volatility than the Paleozoic. This rules out a simple dosage explanation and points toward an interaction between environmental forcing and the maturity of marine ecospace occupation.
 
