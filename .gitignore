@@ -81,3 +81,4 @@ thesis/**/*.pdf
 # Allowlist: small derived forcing series
 !thesis/earth_system/climate_540myr/output/climate_540myr_timeseries.csv
 .hypothesis/
+.coverage
