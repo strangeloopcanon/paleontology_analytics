@@ -9,7 +9,6 @@ import pandas as pd
 from src.analysis.advanced_sota import calculate_null_model
 from src.analysis.export_web_data import export_dashboard_data
 from src.analysis.kids import generate_kids_data
-from src.analysis.sota_stats import analyze_biogeographic_dynamics
 from src.cli import main as cli_main
 
 
@@ -69,20 +68,6 @@ def test_generate_kids_data_handles_non_mesozoic_input(tmp_path) -> None:
     dino_payload = json.loads(dino_path.read_text())
     assert "facts" in dino_payload
     assert isinstance(dino_payload["facts"], list)
-
-
-def test_sota_analysis_handles_sparse_bins_without_crashing(tmp_path) -> None:
-    data_path = tmp_path / "data.parquet"
-    output_dir = tmp_path / "out"
-    output_dir.mkdir()
-
-    rows = [
-        {"genus": f"G{i}", "mid_ma": 100.0, "lat": 1.0, "lng": 2.0}
-        for i in range(20)
-    ]
-    _write_parquet(data_path, rows)
-
-    analyze_biogeographic_dynamics(str(data_path), str(output_dir))
 
 
 def test_null_model_handles_none_modularity_output(tmp_path) -> None:

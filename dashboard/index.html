@@ -680,7 +680,7 @@
 		            const climateData = val(results[3]);
 		            const nullData = val(results[4]);
 		            const taxData = val(results[5]);
-		            const unavailableHTML = '<p style="color:#999; padding:20px; text-align:center;">Data not available \u2014 run <code>python -m src.cli analyze --type dashboard</code> to generate.</p>';
+		            const unavailableHTML = '<p style="color:#999; padding:20px; text-align:center;">Data not available \u2014 run <code>python -m src.cli analyze</code> to generate.</p>';
 		
 		            // 1. MODULARITY
 		            const fmt = (v, digits = 3) => (v === null || v === undefined || Number.isNaN(v)) ? 'NA' : Number(v).toFixed(digits);

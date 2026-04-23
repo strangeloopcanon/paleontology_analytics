@@ -84,7 +84,7 @@ python thesis/geographic_portfolio/run_event_portfolio_analysis.py
 python thesis/paleobiotic_velocity/run_pipeline.py
 
 # Build dashboard data (requires processed occurrence data)
-python -m src.cli analyze --type dashboard
+python -m src.cli analyze
 ```
 
 </details>
